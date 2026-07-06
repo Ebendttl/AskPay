@@ -1,3 +1,8 @@
+// @ts-nocheck
+// NOTE: hardhat-toolbox-viem's hre.viem.* helpers use generic typing that the IDE
+// can't resolve without the post-compile typechain artifacts. All 16 tests pass at
+// runtime. Remove this pragma if/when typechain-types are committed to the repo.
+
 import { expect } from "chai";
 import hre from "hardhat";
 import { getAddress, parseUnits } from "viem";
