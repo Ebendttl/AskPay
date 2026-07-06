@@ -1,0 +1,6 @@
+{
+  "PayPerQueryModule": {
+    "paymentToken": "0xdE9e4C3ce781b4bA68120d6261cbad65ce0aB00b",
+    "initialFee": "10000000000000000"
+  }
+}
