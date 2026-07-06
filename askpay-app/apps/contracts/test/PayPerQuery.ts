@@ -80,12 +80,12 @@ describe("PayPerQuery", function () {
       );
       await tokenAsUser.write.approve([payPerQuery.address, DEFAULT_FEE]);
 
-      const contractBefore = await mockToken.read.balanceOf([
+      const contractBefore = (await mockToken.read.balanceOf([
         payPerQuery.address,
-      ]);
-      const userBefore = await mockToken.read.balanceOf([
+      ])) as bigint;
+      const userBefore = (await mockToken.read.balanceOf([
         user.account.address,
-      ]);
+      ])) as bigint;
 
       // Ask
       const ppqAsUser = await hre.viem.getContractAt(
@@ -128,8 +128,8 @@ describe("PayPerQuery", function () {
       expect(events[0].args.payer).to.equal(getAddress(user.account.address));
       expect(events[0].args.amount).to.equal(DEFAULT_FEE);
       expect(events[0].args.queryId).to.equal(QUERY_ID);
-      // timestamp is a block timestamp — just assert it's truthy (>0)
-      expect(events[0].args.timestamp).to.be.greaterThan(0n);
+      // timestamp comes back from viem as a JS number (not bigint) — compare with 0
+      expect(Number(events[0].args.timestamp)).to.be.greaterThan(0);
     });
 
     // ── Insufficient approval ─────────────────────────────────────────────────
