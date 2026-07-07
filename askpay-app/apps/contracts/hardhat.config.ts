@@ -1,6 +1,5 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
-import "dotenv/config";
 
 // IMPORTANT: Celo uses a non-standard HD derivation path: m/44'/52752'/0'/0
 // This only matters if you use a mnemonic instead of a raw PRIVATE_KEY.
