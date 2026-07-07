@@ -36,11 +36,9 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    // Uses Etherscan v2 unified API — works for Celoscan verification
-    apiKey: {
-      celo: process.env.ETHERSCAN_API_KEY || "",
-      "celo-sepolia": process.env.ETHERSCAN_API_KEY || "",
-    },
+    // Single string key activates Etherscan v2 API mode in hardhat-verify (sends chainid param).
+    // Per-network keys (object form) disable v2 mode — see hardhat-verify src/etherscan.ts:58.
+    apiKey: process.env.ETHERSCAN_API_KEY || "",
     customChains: [
       {
         network: "celo",
