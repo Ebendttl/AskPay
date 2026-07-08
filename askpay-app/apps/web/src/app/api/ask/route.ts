@@ -144,64 +144,30 @@ export async function POST(req: NextRequest) {
       transport: http(rpcUrl),
     });
 
-    // 1. Fetch transaction receipt on-chain
-    let receipt;
+    // Verify payment via the standalone use-minipay-paygate package
+    const { verifyPayment } = await import("use-minipay-paygate");
     try {
-      receipt = await publicClient.getTransactionReceipt({ hash: txHash });
-    } catch (err) {
-      console.error("[AskPay API] Failed to fetch transaction receipt:", err);
+      await verifyPayment({
+        publicClient,
+        txHash,
+        expectedReceiver: contractAddress,
+        customEvent: {
+          abi: PAY_PER_QUERY_ABI,
+          eventName: "QueryPaid",
+          verifyArgs: (args: any) => {
+            return args.queryId === BigInt(queryId);
+          },
+        },
+      });
+    } catch (err: any) {
+      console.error("[AskPay API] Payment verification failed:", err.message);
       return NextResponse.json(
-        { error: "Transaction receipt not found. Make sure the transaction is confirmed." },
+        { error: err.message || "Payment verification failed" },
         { status: 400 }
       );
     }
 
-    // 2. Verify status
-    if (receipt.status !== "success") {
-      return NextResponse.json(
-        { error: `Transaction failed on-chain with status: ${receipt.status}` },
-        { status: 400 }
-      );
-    }
-
-    // 3. Verify recipient address
-    const toAddress = receipt.to?.toLowerCase();
-    if (toAddress !== contractAddress.toLowerCase()) {
-      return NextResponse.json(
-        { error: `Transaction recipient mismatch. Expected contract: ${contractAddress}, got: ${receipt.to}` },
-        { status: 400 }
-      );
-    }
-
-    // 4. Verify QueryPaid event log
-    const logs = parseEventLogs({
-      abi: PAY_PER_QUERY_ABI,
-      eventName: "QueryPaid",
-      logs: receipt.logs,
-    });
-
-    if (logs.length === 0) {
-      return NextResponse.json(
-        { error: "QueryPaid event not found in transaction logs" },
-        { status: 400 }
-      );
-    }
-
-    // Check queryId match (using BigInt comparison since queryId on chain is uint256)
-    const targetQueryId = BigInt(queryId);
-    const matchingLog = logs.find((log) => {
-      // log.args.queryId is type bigint
-      return log.args.queryId === targetQueryId;
-    });
-
-    if (!matchingLog) {
-      return NextResponse.json(
-        { error: `QueryPaid event found, but queryId mismatch. Expected: ${queryId}` },
-        { status: 400 }
-      );
-    }
-
-    console.log("[AskPay API] Payment verified successfully!");
+    console.log("[AskPay API] Payment verified successfully via use-minipay-paygate package!");
 
     // 5. Call LLM
     const answer = await getLLMResponse(question);
