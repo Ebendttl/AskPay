@@ -1,0 +1,29 @@
+{
+  "name": "use-minipay-paygate",
+  "version": "0.1.0",
+  "description": "On-chain stablecoin payment verification library for Celo and MiniPay applications.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "celo",
+    "minipay",
+    "paygate",
+    "web3",
+    "viem",
+    "payment",
+    "verification"
+  ],
+  "author": "Ebendttl",
+  "license": "MIT",
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "viem": "^2.0.0"
+  }
+}
