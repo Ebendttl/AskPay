@@ -22,7 +22,8 @@
     "@rainbow-me/rainbowkit": "^2.0.0",
     "@tanstack/react-query": "^5.0.0",
     "viem": "^2.0.0",
-    "wagmi": "^2.0.0"
+    "wagmi": "^2.0.0",
+    "use-minipay-paygate": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
