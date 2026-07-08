@@ -207,6 +207,8 @@ export function useAskPay(): UseAskPayReturn {
         step: "error",
         errorMessage: message,
       }));
+      // Re-throw so the caller (ChatBox) can detect failure via try/catch
+      throw err;
     }
   }, [address, publicClient, fee, writeContractAsync]);
 
