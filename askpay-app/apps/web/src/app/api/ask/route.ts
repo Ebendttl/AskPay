@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, parseEventLogs } from "viem";
+import { createPublicClient, http } from "viem";
 import { celo, celoSepolia } from "viem/chains";
 import {
   PAY_PER_QUERY_ABI,
