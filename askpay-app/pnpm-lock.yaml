@@ -123,6 +123,9 @@ importers:
       tailwind-merge:
         specifier: ^2.0.0
         version: 2.6.1
+      use-minipay-paygate:
+        specifier: workspace:*
+        version: link:../../packages/use-minipay-paygate
       viem:
         specifier: ^2.0.0
         version: 2.54.3(typescript@5.9.3)
