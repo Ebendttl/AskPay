@@ -60,8 +60,8 @@ export interface UseAskPayReturn {
   isFeeLoading: boolean;
   /** Full flow state */
   state: AskPayState;
-  /** Kick off the approve → askQuestion flow */
-  submitQuestion: () => Promise<void>;
+  /** Kick off the approve → askQuestion flow. Returns the queryId and txHash on success. */
+  submitQuestion: () => Promise<{ queryId: bigint; txHash: `0x${string}` }>;
   /** Reset back to idle so the user can try again */
   reset: () => void;
 }
