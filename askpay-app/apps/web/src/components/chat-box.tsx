@@ -82,7 +82,7 @@ function StatusBadge({ step }: { step: string }) {
 
 interface Message {
   id: string;
-  role: "user" | "system";
+  role: "user" | "assistant" | "system";
   content: string;
 }
 
@@ -97,48 +97,115 @@ export function ChatBox() {
 
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [apiPending, setApiPending] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const isBusy = ![  "idle", "success", "error"].includes(state.step);
+  const isBusy = apiPending || ![  "idle", "success", "error"].includes(state.step);
 
   // ---- Handle submit -------------------------------------------------------
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!question.trim() || isBusy) return;
 
+    const savedQuestion = question.trim();
+
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: question.trim(),
+      content: savedQuestion,
     };
     setMessages((prev) => [...prev, userMsg]);
     setQuestion("");
+    setApiError(null);
 
-    // submitQuestion() throws on error and resolves on success —
-    // use a try/catch rather than reading state.step (stale closure).
-    let succeeded = false;
+    let queryId: bigint;
+    let txHash: `0x${string}`;
+
     try {
-      await submitQuestion();
-      succeeded = true;
-    } catch {
-      succeeded = false;
+      // Step 1: Submit transaction & wait for confirmation
+      const res = await submitQuestion();
+      queryId = res.queryId;
+      txHash = res.txHash;
+    } catch (err) {
+      // Payment transaction failed or was rejected by user
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: `⚠️ Payment failed or rejected.`,
+        },
+      ]);
+      return;
     }
 
-    // Add a placeholder system message — Phase 4 will replace this with
-    // the real LLM answer from /api/ask.
+    // Step 2: Call the backend API route
+    setApiPending(true);
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: "system",
-        content: succeeded
-          ? `✅ Payment confirmed on Celo Sepolia. (Phase 4 will show the AI answer here)`
-          : `⚠️ Payment failed. Your question was not sent.`,
+        content: `⌛ Payment confirmed. Verifying on-chain & waiting for AI response...`,
       },
     ]);
+
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: savedQuestion,
+          queryId: queryId.toString(),
+          txHash: txHash,
+          network: "sepolia", // Targeting Celo Sepolia
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to verify payment or fetch response");
+      }
+
+      // Remove the "waiting for AI response..." system message and add the real answer
+      setMessages((prev) => {
+        const filtered = prev.filter(
+          (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
+        );
+        return [
+          ...filtered,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: data.answer,
+          },
+        ];
+      });
+    } catch (err: any) {
+      const msg = err.message || "Failed to fetch response";
+      setApiError(msg);
+      setMessages((prev) => {
+        const filtered = prev.filter(
+          (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
+        );
+        return [
+          ...filtered,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `⚠️ Error verifying query: ${msg}`,
+          },
+        ];
+      });
+    } finally {
+      setApiPending(false);
+    }
   }
 
   // Allow asking another question after success/error
   function handleNewQuestion() {
+    setApiError(null);
     reset();
   }
 
