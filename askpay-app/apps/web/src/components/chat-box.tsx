@@ -116,12 +116,8 @@ export function ChatBox() {
     // submitQuestion() throws on error and resolves on success —
     // use a try/catch rather than reading state.step (stale closure).
     let succeeded = false;
-    let queryIdStr = "?";
     try {
-      const result = await submitQuestion();
-      // If submitQuestion didn't throw, the flow completed successfully.
-      // We can't read state.lastQueryId here (stale), so we grab it from
-      // the hook's current ref after the await via a separate read.
+      await submitQuestion();
       succeeded = true;
     } catch {
       succeeded = false;
