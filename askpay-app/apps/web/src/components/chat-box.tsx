@@ -324,9 +324,12 @@ export function ChatBox() {
           {state.step === "error" && state.errorMessage && (
             <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
           )}
+          {apiError && (
+            <p className="text-red-500 mt-1 text-xs break-all">{apiError}</p>
+          )}
 
           {/* Reset after terminal states */}
-          {(state.step === "success" || state.step === "error") && (
+          {(state.step === "success" || state.step === "error" || apiError) && !apiPending && (
             <button
               onClick={handleNewQuestion}
               className="mt-2 text-xs text-primary underline hover:no-underline"
