@@ -116,7 +116,7 @@ export function useAskPay(): UseAskPayReturn {
         step: "error",
         errorMessage: "No wallet connected. Please connect your wallet first.",
       }));
-      return;
+      throw new Error("No wallet connected");
     }
     if (!publicClient) {
       setState((s) => ({
@@ -124,7 +124,7 @@ export function useAskPay(): UseAskPayReturn {
         step: "error",
         errorMessage: "Network client not ready. Please try again.",
       }));
-      return;
+      throw new Error("Network client not ready");
     }
     if (fee === undefined) {
       setState((s) => ({
@@ -132,7 +132,7 @@ export function useAskPay(): UseAskPayReturn {
         step: "error",
         errorMessage: "Fee not loaded yet. Please wait a moment.",
       }));
-      return;
+      throw new Error("Fee not loaded yet");
     }
 
     setState({ ...INITIAL_STATE, step: "checking-allowance" });
@@ -193,11 +193,11 @@ export function useAskPay(): UseAskPayReturn {
 
       console.log(
         "[AskPay] askQuestion confirmed ✓ | txHash:", askTxHash,
-        "| queryId:", queryId.toString(),
-        "| Phase 4: backend /api/ask call goes here"
+        "| queryId:", queryId.toString()
       );
 
       setState((s) => ({ ...s, step: "success" }));
+      return { queryId, txHash: askTxHash };
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An unknown error occurred.";
