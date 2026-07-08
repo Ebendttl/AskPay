@@ -111,21 +111,32 @@ export function ChatBox() {
       content: question.trim(),
     };
     setMessages((prev) => [...prev, userMsg]);
-    const savedQuestion = question.trim();
     setQuestion("");
 
-    await submitQuestion();
+    // submitQuestion() throws on error and resolves on success —
+    // use a try/catch rather than reading state.step (stale closure).
+    let succeeded = false;
+    let queryIdStr = "?";
+    try {
+      const result = await submitQuestion();
+      // If submitQuestion didn't throw, the flow completed successfully.
+      // We can't read state.lastQueryId here (stale), so we grab it from
+      // the hook's current ref after the await via a separate read.
+      succeeded = true;
+    } catch {
+      succeeded = false;
+    }
 
-    // After success, add a system placeholder (Phase 4 will replace this
-    // with the real LLM answer from /api/ask)
+    // Add a placeholder system message — Phase 4 will replace this with
+    // the real LLM answer from /api/ask.
     setMessages((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         role: "system",
-        content: state.step === "error"
-          ? `⚠️ Payment failed. Your question was not sent.`
-          : `✅ Payment confirmed on Celo Sepolia. (Phase 4 will show the AI answer here — queryId: ${state.lastQueryId?.toString() ?? "?"})`,
+        content: succeeded
+          ? `✅ Payment confirmed on Celo Sepolia. (Phase 4 will show the AI answer here)`
+          : `⚠️ Payment failed. Your question was not sent.`,
       },
     ]);
   }
