@@ -24,7 +24,7 @@ export class PaymentVerificationError extends Error {
 
 export interface VerifyPaymentOptions {
   /** The viem PublicClient instance to query the blockchain */
-  publicClient: PublicClient;
+  publicClient: any;
   /** The transaction hash containing the payment */
   txHash: Hash;
   /** The expected payment recipient address (case-insensitive) */
