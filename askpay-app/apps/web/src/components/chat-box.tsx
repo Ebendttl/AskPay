@@ -103,7 +103,16 @@ export interface HistoryItem {
 export function ChatBox() {
   const { address, isConnected } = useAccount();
   const { isMiniPay, detected } = useMiniPay();
-  const { fee, isFeeLoading, state, submitQuestion, reset } = useAskPay();
+  const {
+    fee,
+    isFeeLoading,
+    balance,
+    isBalanceLoading,
+    refetchBalance,
+    state,
+    submitQuestion,
+    reset,
+  } = useAskPay();
 
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
