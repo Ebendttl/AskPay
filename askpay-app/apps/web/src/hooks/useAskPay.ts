@@ -109,7 +109,7 @@ export function useAskPay(): UseAskPayReturn {
   // ------------------------------------------------------------------
   // Main flow
   // ------------------------------------------------------------------
-  const submitQuestion = useCallback(async () => {
+  const submitQuestion = useCallback(async (customQueryId?: bigint) => {
     if (!address) {
       setState((s) => ({
         ...s,
@@ -175,7 +175,7 @@ export function useAskPay(): UseAskPayReturn {
       // ----------------------------------------------------------------
       setState((s) => ({ ...s, step: "asking" }));
 
-      const queryId = generateQueryId();
+      const queryId = customQueryId ?? generateQueryId();
 
       const askTxHash = await writeContractAsync({
         address: PAYPERQUERY_ADDRESS,
