@@ -61,7 +61,7 @@ export interface UseAskPayReturn {
   /** Full flow state */
   state: AskPayState;
   /** Kick off the approve → askQuestion flow. Returns the queryId and txHash on success. */
-  submitQuestion: () => Promise<{ queryId: bigint; txHash: `0x${string}` }>;
+  submitQuestion: (customQueryId?: bigint) => Promise<{ queryId: bigint; txHash: `0x${string}` }>;
   /** Reset back to idle so the user can try again */
   reset: () => void;
 }
@@ -71,7 +71,7 @@ export interface UseAskPayReturn {
 // ---------------------------------------------------------------------------
 
 /** Generate a pseudo-random uint256 queryId. Good enough for MVP. */
-function generateQueryId(): bigint {
+export function generateQueryId(): bigint {
   const hi = BigInt(Math.floor(Math.random() * 0xffffffff));
   const lo = BigInt(Math.floor(Math.random() * 0xffffffff));
   return (hi << 32n) | lo;
