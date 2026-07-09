@@ -215,6 +215,13 @@ export function useAskPay(): UseAskPayReturn {
         "| queryId:", queryId.toString()
       );
 
+      // Auto-refresh the balance
+      try {
+        await refetchBalance();
+      } catch (err) {
+        console.error("[AskPay] Error refetching balance after payment:", err);
+      }
+
       setState((s) => ({ ...s, step: "success" }));
       return { queryId, txHash: askTxHash };
     } catch (err: unknown) {
@@ -229,11 +236,20 @@ export function useAskPay(): UseAskPayReturn {
       // Re-throw so the caller (ChatBox) can detect failure via try/catch
       throw err;
     }
-  }, [address, publicClient, fee, writeContractAsync]);
+  }, [address, publicClient, fee, writeContractAsync, refetchBalance]);
 
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
   }, []);
 
-  return { fee, isFeeLoading, state, submitQuestion, reset };
+  return {
+    fee,
+    isFeeLoading,
+    balance,
+    isBalanceLoading,
+    refetchBalance,
+    state,
+    submitQuestion,
+    reset,
+  };
 }
