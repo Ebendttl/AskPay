@@ -15,11 +15,34 @@
 // Addresses
 // ---------------------------------------------------------------------------
 
+import { celo, celoSepolia } from "wagmi/chains";
+
 export const PAYPERQUERY_ADDRESS_SEPOLIA =
   (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_SEPOLIA as `0x${string}`) ?? "0x";
 
 export const USDM_ADDRESS_SEPOLIA =
   (process.env.NEXT_PUBLIC_USDM_ADDRESS_SEPOLIA as `0x${string}`) ?? "0x";
+
+export const PAYPERQUERY_ADDRESS_MAINNET =
+  (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`) ?? "0x";
+
+export const USDM_ADDRESS_MAINNET =
+  (process.env.NEXT_PUBLIC_USDM_ADDRESS_MAINNET as `0x${string}`) ?? "0x";
+
+export const NEXT_PUBLIC_NETWORK = process.env.NEXT_PUBLIC_NETWORK || "sepolia";
+
+export const ACTIVE_NETWORK = NEXT_PUBLIC_NETWORK === "mainnet" ? "mainnet" : "sepolia";
+export const ACTIVE_CHAIN = ACTIVE_NETWORK === "mainnet" ? celo : celoSepolia;
+
+export const PAYPERQUERY_ADDRESS =
+  ACTIVE_NETWORK === "mainnet"
+    ? PAYPERQUERY_ADDRESS_MAINNET
+    : PAYPERQUERY_ADDRESS_SEPOLIA;
+
+export const USDM_ADDRESS =
+  ACTIVE_NETWORK === "mainnet"
+    ? USDM_ADDRESS_MAINNET
+    : USDM_ADDRESS_SEPOLIA;
 
 // ---------------------------------------------------------------------------
 // PayPerQuery ABI — only the selectors needed by the UI
