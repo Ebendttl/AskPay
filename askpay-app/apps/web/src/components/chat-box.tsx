@@ -152,6 +152,21 @@ export function ChatBox() {
 
   const isBusy = apiPending || !["idle", "success", "error"].includes(state.step);
 
+  const hasInsufficientFunds =
+    isConnected &&
+    balance !== undefined &&
+    fee !== undefined &&
+    balance < fee;
+
+  const balanceDisplay = isBalanceLoading
+    ? "…"
+    : balance !== undefined
+    ? parseFloat(formatUnits(balance, 18)).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 4,
+      })
+    : "0.00";
+
   // ---- Handle submit -------------------------------------------------------
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
