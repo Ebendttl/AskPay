@@ -25,6 +25,7 @@ import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useAskPay } from "@/hooks/useAskPay";
 import { Loader2, Send, CheckCircle2, AlertCircle, Zap } from "lucide-react";
+import { ACTIVE_NETWORK } from "@/lib/contracts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -158,7 +159,7 @@ export function ChatBox() {
           question: savedQuestion,
           queryId: queryId.toString(),
           txHash: txHash,
-          network: "sepolia", // Targeting Celo Sepolia
+          network: ACTIVE_NETWORK,
         }),
       });
 
