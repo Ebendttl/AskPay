@@ -550,6 +550,36 @@ export function ChatBox() {
         )}
 
         {/* Input */}
+        {isConnected && (
+          <div className="flex flex-col gap-1.5 px-4 py-2 bg-muted/10 border-t border-border text-xs">
+            <div className="flex justify-between items-center text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3 text-muted-foreground/60" />
+                <span>USDm Balance</span>
+              </span>
+              <span className="font-mono font-medium text-foreground">
+                {balanceDisplay} USDm
+              </span>
+            </div>
+
+            {hasInsufficientFunds && (
+              <div className="flex items-start gap-1.5 text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium">
+                    Insufficient USDm balance. You need at least {feeDisplay} USDm to ask a question.
+                  </p>
+                  {ACTIVE_NETWORK === "sepolia" && (
+                    <p className="text-[10px] opacity-80 mt-0.5">
+                      Testnet: use the mint script to top up your balance.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit}
           className="flex items-end gap-2 px-4 py-3 border-t border-border bg-card rounded-b-2xl"
@@ -579,7 +609,7 @@ export function ChatBox() {
           <button
             type="submit"
             id="ask-button"
-            disabled={!question.trim() || isBusy || !isConnected}
+            disabled={!question.trim() || isBusy || !isConnected || hasInsufficientFunds}
             className="
               flex items-center gap-2 px-4 py-2 rounded-xl
               bg-primary text-primary-foreground font-medium text-sm
