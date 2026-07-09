@@ -112,6 +112,20 @@ export function useAskPay(): UseAskPayReturn {
   });
 
   // ------------------------------------------------------------------
+  // Read: USDm balance from Token contract
+  // ------------------------------------------------------------------
+  const { data: balance, isLoading: isBalanceLoading, refetch: refetchBalance } = useReadContract({
+    address: USDM_ADDRESS,
+    abi: ERC20_ABI,
+    args: address ? [address] : undefined,
+    functionName: "balanceOf",
+    chainId: ACTIVE_CHAIN.id,
+    query: {
+      enabled: !!address,
+    },
+  });
+
+  // ------------------------------------------------------------------
   // Main flow
   // ------------------------------------------------------------------
   const submitQuestion = useCallback(async (customQueryId?: bigint) => {
