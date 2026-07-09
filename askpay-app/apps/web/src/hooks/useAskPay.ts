@@ -24,12 +24,12 @@ import {
   useWaitForTransactionReceipt,
   usePublicClient,
 } from "wagmi";
-import { celoSepolia } from "wagmi/chains";
 import {
   PAY_PER_QUERY_ABI,
   ERC20_ABI,
-  PAYPERQUERY_ADDRESS_SEPOLIA,
-  USDM_ADDRESS_SEPOLIA,
+  PAYPERQUERY_ADDRESS,
+  USDM_ADDRESS,
+  ACTIVE_CHAIN,
 } from "@/lib/contracts";
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ const INITIAL_STATE: AskPayState = {
 
 export function useAskPay(): UseAskPayReturn {
   const { address } = useAccount();
-  const publicClient = usePublicClient({ chainId: celoSepolia.id });
+  const publicClient = usePublicClient({ chainId: ACTIVE_CHAIN.id });
   const { writeContractAsync } = useWriteContract();
 
   const [state, setState] = useState<AskPayState>(INITIAL_STATE);
@@ -100,10 +100,10 @@ export function useAskPay(): UseAskPayReturn {
   // Read: fee from PayPerQuery contract
   // ------------------------------------------------------------------
   const { data: fee, isLoading: isFeeLoading } = useReadContract({
-    address: PAYPERQUERY_ADDRESS_SEPOLIA,
+    address: PAYPERQUERY_ADDRESS,
     abi: PAY_PER_QUERY_ABI,
     functionName: "fee",
-    chainId: celoSepolia.id,
+    chainId: ACTIVE_CHAIN.id,
   });
 
   // ------------------------------------------------------------------
@@ -142,10 +142,10 @@ export function useAskPay(): UseAskPayReturn {
       // Step 1: Check current allowance
       // ----------------------------------------------------------------
       const allowance = await publicClient.readContract({
-        address: USDM_ADDRESS_SEPOLIA,
+        address: USDM_ADDRESS,
         abi: ERC20_ABI,
         functionName: "allowance",
-        args: [address, PAYPERQUERY_ADDRESS_SEPOLIA],
+        args: [address, PAYPERQUERY_ADDRESS],
       });
 
       // ----------------------------------------------------------------
@@ -155,11 +155,11 @@ export function useAskPay(): UseAskPayReturn {
         setState((s) => ({ ...s, step: "approving" }));
 
         const approveTxHash = await writeContractAsync({
-          address: USDM_ADDRESS_SEPOLIA,
+          address: USDM_ADDRESS,
           abi: ERC20_ABI,
           functionName: "approve",
-          args: [PAYPERQUERY_ADDRESS_SEPOLIA, fee],
-          chainId: celoSepolia.id,
+          args: [PAYPERQUERY_ADDRESS, fee],
+          chainId: ACTIVE_CHAIN.id,
         });
 
         setState((s) => ({ ...s, step: "approve-confirming", approveTxHash }));
@@ -178,11 +178,11 @@ export function useAskPay(): UseAskPayReturn {
       const queryId = generateQueryId();
 
       const askTxHash = await writeContractAsync({
-        address: PAYPERQUERY_ADDRESS_SEPOLIA,
+        address: PAYPERQUERY_ADDRESS,
         abi: PAY_PER_QUERY_ABI,
         functionName: "askQuestion",
         args: [queryId],
-        chainId: celoSepolia.id,
+        chainId: ACTIVE_CHAIN.id,
       });
 
       setState((s) => ({ ...s, step: "ask-confirming", askTxHash, lastQueryId: queryId }));
