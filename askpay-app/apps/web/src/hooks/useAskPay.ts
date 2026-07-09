@@ -58,6 +58,11 @@ export interface UseAskPayReturn {
   /** Current contract fee (18-decimal bigint), undefined while loading */
   fee: bigint | undefined;
   isFeeLoading: boolean;
+  /** USDm balance of the connected account */
+  balance: bigint | undefined;
+  isBalanceLoading: boolean;
+  /** Manual trigger to reload user balance */
+  refetchBalance: () => Promise<any>;
   /** Full flow state */
   state: AskPayState;
   /** Kick off the approve → askQuestion flow. Returns the queryId and txHash on success. */
