@@ -18,13 +18,13 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
-import { useAskPay } from "@/hooks/useAskPay";
-import { Loader2, Send, CheckCircle2, AlertCircle, Zap } from "lucide-react";
+import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
+import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 
 // ---------------------------------------------------------------------------
@@ -87,6 +87,15 @@ interface Message {
   content: string;
 }
 
+export interface HistoryItem {
+  queryId: string;
+  question: string;
+  answer?: string;
+  txHash?: `0x${string}`;
+  status: "pending" | "paid" | "answered" | "failed";
+  timestamp: number;
+}
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -101,34 +110,96 @@ export function ChatBox() {
   const [apiPending, setApiPending] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const isBusy = apiPending || ![  "idle", "success", "error"].includes(state.step);
+  // History State
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("askpay_history");
+      if (saved) {
+        const parsed = JSON.parse(saved) as HistoryItem[];
+        setHistory(parsed);
+        if (parsed.length > 0) {
+          setShowHistory(true);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load history from localStorage", e);
+    }
+  }, []);
+
+  // Save history to state and localStorage
+  const saveHistory = (newHistory: HistoryItem[]) => {
+    setHistory(newHistory);
+    try {
+      localStorage.setItem("askpay_history", JSON.stringify(newHistory));
+    } catch (e) {
+      console.error("Failed to save history to localStorage", e);
+    }
+  };
+
+  const isBusy = apiPending || !["idle", "success", "error"].includes(state.step);
 
   // ---- Handle submit -------------------------------------------------------
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!question.trim() || isBusy) return;
 
+    // Clear history selection to show the new active chat
+    if (selectedQueryId) {
+      setSelectedQueryId(null);
+    }
+
     const savedQuestion = question.trim();
+    setQuestion("");
+    setApiError(null);
+
+    const queryId = generateQueryId();
+    const queryIdStr = queryId.toString();
+
+    // 1. Add to history immediately as pending
+    const newItem: HistoryItem = {
+      queryId: queryIdStr,
+      question: savedQuestion,
+      status: "pending",
+      timestamp: Date.now(),
+    };
+    const currentHistory = [newItem, ...history];
+    saveHistory(currentHistory);
 
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: "user",
       content: savedQuestion,
     };
-    setMessages((prev) => [...prev, userMsg]);
-    setQuestion("");
-    setApiError(null);
+    setMessages([userMsg]);
 
-    let queryId: bigint;
     let txHash: `0x${string}`;
 
     try {
       // Step 1: Submit transaction & wait for confirmation
-      const res = await submitQuestion();
-      queryId = res.queryId;
+      const res = await submitQuestion(queryId);
       txHash = res.txHash;
+
+      // 2. Update history entry to paid
+      saveHistory(
+        currentHistory.map((item) =>
+          item.queryId === queryIdStr
+            ? { ...item, status: "paid" as const, txHash }
+            : item
+        )
+      );
     } catch (err) {
-      // Payment transaction failed or was rejected by user
+      // Update history entry to failed
+      saveHistory(
+        currentHistory.map((item) =>
+          item.queryId === queryIdStr ? { ...item, status: "failed" as const } : item
+        )
+      );
+
       setMessages((prev) => [
         ...prev,
         {
@@ -157,7 +228,7 @@ export function ChatBox() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: savedQuestion,
-          queryId: queryId.toString(),
+          queryId: queryIdStr,
           txHash: txHash,
           network: ACTIVE_NETWORK,
         }),
@@ -169,7 +240,16 @@ export function ChatBox() {
         throw new Error(data.error || "Failed to verify payment or fetch response");
       }
 
-      // Remove the "waiting for AI response..." system message and add the real answer
+      // 3. Update history entry to answered
+      saveHistory(
+        currentHistory.map((item) =>
+          item.queryId === queryIdStr
+            ? { ...item, status: "answered" as const, txHash, answer: data.answer }
+            : item
+        )
+      );
+
+      // Remove system status message and add assistant reply
       setMessages((prev) => {
         const filtered = prev.filter(
           (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
@@ -186,6 +266,14 @@ export function ChatBox() {
     } catch (err: any) {
       const msg = err.message || "Failed to fetch response";
       setApiError(msg);
+
+      // Update history entry to failed
+      saveHistory(
+        currentHistory.map((item) =>
+          item.queryId === queryIdStr ? { ...item, status: "failed" as const } : item
+        )
+      );
+
       setMessages((prev) => {
         const filtered = prev.filter(
           (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
@@ -206,9 +294,71 @@ export function ChatBox() {
 
   // Allow asking another question after success/error
   function handleNewQuestion() {
+    setSelectedQueryId(null);
+    setMessages([]);
     setApiError(null);
     reset();
   }
+
+  // Clear entire history
+  function handleClearHistory() {
+    if (confirm("Are you sure you want to clear your query history?")) {
+      saveHistory([]);
+      setSelectedQueryId(null);
+    }
+  }
+
+  // Determine active messages list to display
+  const activeHistoryItem = selectedQueryId
+    ? history.find((h) => h.queryId === selectedQueryId)
+    : null;
+
+  const messagesToDisplay = activeHistoryItem
+    ? [
+        {
+          id: "q-" + activeHistoryItem.queryId,
+          role: "user" as const,
+          content: activeHistoryItem.question,
+        },
+        ...(activeHistoryItem.answer
+          ? [
+              {
+                id: "a-" + activeHistoryItem.queryId,
+                role: "assistant" as const,
+                content: activeHistoryItem.answer,
+              },
+            ]
+          : []),
+        ...(activeHistoryItem.status === "pending"
+          ? [
+              {
+                id: "s-" + activeHistoryItem.queryId,
+                role: "system" as const,
+                content: "⌛ Payment transaction initiated. Please confirm in wallet...",
+              },
+            ]
+          : []),
+        ...(activeHistoryItem.status === "paid"
+          ? [
+              {
+                id: "s-" + activeHistoryItem.queryId,
+                role: "system" as const,
+                content:
+                  "⌛ Payment confirmed on-chain. Verifying payment & generating AI response...",
+              },
+            ]
+          : []),
+        ...(activeHistoryItem.status === "failed"
+          ? [
+              {
+                id: "s-" + activeHistoryItem.queryId,
+                role: "system" as const,
+                content: "⚠️ Transaction or verification failed.",
+              },
+            ]
+          : []),
+      ]
+    : messages;
 
   // ---- Fee display ---------------------------------------------------------
   const feeDisplay = isFeeLoading
@@ -242,153 +392,281 @@ export function ChatBox() {
     );
   }
 
+  const explorerBaseUrl = ACTIVE_NETWORK === "mainnet" ? "https://celoscan.io" : "https://sepolia.celoscan.io";
+
   // ---- Main chat UI --------------------------------------------------------
   return (
-    <div className="flex flex-col w-full max-w-xl mx-auto h-[calc(100vh-4rem-64px)] min-h-[400px]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card rounded-t-2xl">
-        <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-sm">AskPay</span>
-          <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-            Celo Sepolia
-          </span>
-        </div>
-        {address && (
-          <span className="text-xs text-muted-foreground font-mono">
-            {address.slice(0, 6)}…{address.slice(-4)}
-          </span>
-        )}
-      </div>
-
-      {/* Message list */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background">
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm">
-            <Zap className="h-10 w-10 opacity-20" />
-            <p>Ask a question — pay <strong className="text-foreground">{feeDisplay} USDm</strong> per query.</p>
+    <div className="flex flex-col md:flex-row w-full max-w-4xl mx-auto gap-4 h-[calc(100vh-4rem-64px)] min-h-[500px] px-4">
+      
+      {/* Main Chat Box */}
+      <div className="flex-1 flex flex-col border border-border bg-card rounded-2xl overflow-hidden shadow-sm h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <span className="font-semibold text-sm">AskPay</span>
+            <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full capitalize">
+              Celo {ACTIVE_NETWORK}
+            </span>
           </div>
-        )}
-
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : "bg-muted text-foreground rounded-bl-sm"
-              }`}
-            >
-              {msg.content}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Status bar */}
-      {state.step !== "idle" && (
-        <div className="px-4 py-2 bg-muted/50 border-t border-border text-xs">
-          <StatusBadge step={state.step} />
-
-          {/* Show tx hashes once we have them */}
-          {state.approveTxHash && (
-            <p className="text-muted-foreground mt-1">
-              Approve tx:{" "}
-              <a
-                href={`https://celo-sepolia.blockscout.com/tx/${state.approveTxHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-primary"
-              >
-                {shortHash(state.approveTxHash)}
-              </a>
-            </p>
-          )}
-          {state.askTxHash && (
-            <p className="text-muted-foreground mt-0.5">
-              Payment tx:{" "}
-              <a
-                href={`https://celo-sepolia.blockscout.com/tx/${state.askTxHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-primary"
-              >
-                {shortHash(state.askTxHash)}
-              </a>
-            </p>
-          )}
-
-          {/* Error message */}
-          {state.step === "error" && state.errorMessage && (
-            <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
-          )}
-          {apiError && (
-            <p className="text-red-500 mt-1 text-xs break-all">{apiError}</p>
-          )}
-
-          {/* Reset after terminal states */}
-          {(state.step === "success" || state.step === "error" || apiError) && !apiPending && (
+          <div className="flex items-center gap-2">
+            {address && (
+              <span className="text-xs text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded">
+                {address.slice(0, 6)}…{address.slice(-4)}
+              </span>
+            )}
             <button
-              onClick={handleNewQuestion}
-              className="mt-2 text-xs text-primary underline hover:no-underline"
+              onClick={() => setShowHistory(!showHistory)}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                showHistory 
+                  ? "bg-primary/10 border-primary/20 text-primary"
+                  : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
+              }`}
+              title="Toggle Query History"
             >
-              Ask another question
+              <History className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">History</span>
             </button>
+          </div>
+        </div>
+
+        {/* Message list */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/50">
+          {messagesToDisplay.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm p-4 text-center">
+              <Zap className="h-10 w-10 opacity-20" />
+              <p>Ask a question — pay <strong className="text-foreground">{feeDisplay} USDm</strong> per query.</p>
+              <p className="text-xs max-w-xs">On-chain transaction logs and AI replies are stored locally in your browser's history.</p>
+            </div>
           )}
+
+          {messagesToDisplay.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                    : msg.role === "system"
+                    ? "bg-muted/80 text-muted-foreground border border-border text-xs rounded-lg"
+                    : "bg-muted text-foreground rounded-bl-sm"
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Status bar */}
+        {(state.step !== "idle" || selectedQueryId) && (
+          <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs">
+            {selectedQueryId ? (
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Viewing history item ({activeHistoryItem?.status})</span>
+                <button
+                  onClick={handleNewQuestion}
+                  className="text-primary hover:underline font-medium"
+                >
+                  Ask new question
+                </button>
+              </div>
+            ) : (
+              <StatusBadge step={state.step} />
+            )}
+
+            {/* Show tx hashes once we have them */}
+            {!selectedQueryId && state.approveTxHash && (
+              <p className="text-muted-foreground mt-1">
+                Approve tx:{" "}
+                <a
+                  href={`${explorerBaseUrl}/tx/${state.approveTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary inline-flex items-center gap-0.5"
+                >
+                  {shortHash(state.approveTxHash)} <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+            )}
+            {!selectedQueryId && state.askTxHash && (
+              <p className="text-muted-foreground mt-0.5">
+                Payment tx:{" "}
+                <a
+                  href={`${explorerBaseUrl}/tx/${state.askTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary inline-flex items-center gap-0.5"
+                >
+                  {shortHash(state.askTxHash)} <ExternalLink className="h-3 w-3" />
+                </a>
+              </p>
+            )}
+
+            {/* Error message */}
+            {!selectedQueryId && state.step === "error" && state.errorMessage && (
+              <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
+            )}
+            {!selectedQueryId && apiError && (
+              <p className="text-red-500 mt-1 text-xs break-all">{apiError}</p>
+            )}
+
+            {/* Reset after terminal states */}
+            {!selectedQueryId && (state.step === "success" || state.step === "error" || apiError) && !apiPending && (
+              <button
+                onClick={handleNewQuestion}
+                className="mt-2 text-xs text-primary underline hover:no-underline"
+              >
+                Ask another question
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Input */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-end gap-2 px-4 py-3 border-t border-border bg-card rounded-b-2xl"
+        >
+          <textarea
+            id="question-input"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e as unknown as React.FormEvent);
+              }
+            }}
+            placeholder={selectedQueryId ? "Type to ask a new question…" : "Type your question…"}
+            disabled={isBusy}
+            rows={1}
+            className="
+              flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2
+              text-sm placeholder:text-muted-foreground
+              focus:outline-none focus:ring-2 focus:ring-ring
+              disabled:opacity-50 disabled:cursor-not-allowed
+              min-h-[40px] max-h-[120px] overflow-y-auto
+            "
+            style={{ fieldSizing: "content" } as React.CSSProperties}
+          />
+          <button
+            type="submit"
+            id="ask-button"
+            disabled={!question.trim() || isBusy || !isConnected}
+            className="
+              flex items-center gap-2 px-4 py-2 rounded-xl
+              bg-primary text-primary-foreground font-medium text-sm
+              hover:bg-primary/90 active:scale-95
+              transition-all duration-150
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+              whitespace-nowrap
+            "
+          >
+            {isBusy ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {isBusy ? "Processing…" : `Ask (${feeDisplay} USDm)`}
+          </button>
+        </form>
+      </div>
+
+      {/* Collapsible History Panel */}
+      {showHistory && (
+        <div className="w-full md:w-80 border border-border bg-card rounded-2xl flex flex-col overflow-hidden shadow-sm h-full max-h-[500px] md:max-h-none">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/10">
+            <span className="font-semibold text-sm flex items-center gap-1.5">
+              <History className="h-4 w-4 text-primary" />
+              History ({history.length})
+            </span>
+            {history.length > 0 && (
+              <button
+                onClick={handleClearHistory}
+                className="text-muted-foreground hover:text-red-500 transition-colors p-1 rounded"
+                title="Clear all history"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Sidebar List */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-background/20">
+            {history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
+                <Clock className="h-8 w-8 opacity-25 mb-1.5" />
+                <p className="text-xs">No questions asked yet.</p>
+              </div>
+            ) : (
+              history.map((item) => {
+                const isSelected = selectedQueryId === item.queryId;
+                
+                // HSL Curated Status Badge Colors
+                const badgeStyle = 
+                  item.status === "answered"
+                    ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+                    : item.status === "paid"
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                    : item.status === "pending"
+                    ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500 border-yellow-500/20 animate-pulse"
+                    : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20";
+
+                return (
+                  <div
+                    key={item.queryId}
+                    onClick={() => setSelectedQueryId(isSelected ? null : item.queryId)}
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 relative group ${
+                      isSelected
+                        ? "bg-muted/80 border-primary"
+                        : "bg-card border-border/80 hover:bg-muted/30 hover:border-border"
+                    }`}
+                  >
+                    {/* Status Badge */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${badgeStyle}`}>
+                        {item.status}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    {/* Question snippet */}
+                    <p className="text-xs text-foreground font-medium line-clamp-2 mb-2 break-words">
+                      {item.question}
+                    </p>
+
+                    {/* Footer receipt link */}
+                    {item.txHash && (
+                      <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-border/30">
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          ID: {item.queryId.slice(0, 8)}…
+                        </span>
+                        <a
+                          href={`${explorerBaseUrl}/tx/${item.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()} // don't select item when clicking link
+                          className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
+                        >
+                          Receipt <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
-
-      {/* Input */}
-      <form
-        onSubmit={handleSubmit}
-        className="flex items-end gap-2 px-4 py-3 border-t border-border bg-card rounded-b-2xl"
-      >
-        <textarea
-          id="question-input"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e as unknown as React.FormEvent);
-            }
-          }}
-          placeholder="Type your question…"
-          disabled={isBusy}
-          rows={1}
-          className="
-            flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2
-            text-sm placeholder:text-muted-foreground
-            focus:outline-none focus:ring-2 focus:ring-ring
-            disabled:opacity-50 disabled:cursor-not-allowed
-            min-h-[40px] max-h-[120px] overflow-y-auto
-          "
-          style={{ fieldSizing: "content" } as React.CSSProperties}
-        />
-        <button
-          type="submit"
-          id="ask-button"
-          disabled={!question.trim() || isBusy || !isConnected}
-          className="
-            flex items-center gap-2 px-4 py-2 rounded-xl
-            bg-primary text-primary-foreground font-medium text-sm
-            hover:bg-primary/90 active:scale-95
-            transition-all duration-150
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-            whitespace-nowrap
-          "
-        >
-          {isBusy ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          {isBusy ? "Processing…" : `Ask (${feeDisplay} USDm)`}
-        </button>
-      </form>
     </div>
+  );
+}
   );
 }
