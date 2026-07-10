@@ -15,6 +15,7 @@ import { ConnectButton } from "@/components/connect-button"
 
 const navLinks = [
   { name: "Home", href: "/" },
+  { name: "How It Works", href: "/how-it-works" },
   { name: "Docs", href: "https://docs.celo.org", external: true },
 ]
 
