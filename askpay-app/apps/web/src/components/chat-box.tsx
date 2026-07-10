@@ -25,6 +25,7 @@ import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
 import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 
 // ---------------------------------------------------------------------------
@@ -457,11 +458,11 @@ export function ChatBox() {
         {/* Message list */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-background/50">
           {messagesToDisplay.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm p-4 text-center">
-              <Zap className="h-10 w-10 opacity-20" />
-              <p>Ask a question — pay <strong className="text-foreground">{feeDisplay} USDm</strong> per query.</p>
-              <p className="text-xs max-w-xs">On-chain transaction logs and AI replies are stored locally in your browser's history.</p>
-            </div>
+            <EmptyState
+              Icon={Zap}
+              title={`Ask a question — pay ${feeDisplay} USDm per query`}
+              description="Your question is paid for on-chain before the AI answers it. Transaction logs and replies are stored locally in your browser."
+            />
           )}
 
           {messagesToDisplay.map((msg) => (
