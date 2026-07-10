@@ -6,6 +6,7 @@ const footerLinks = [
   { name: "About", href: "/about" },
   { name: "Legal", href: "/legal" },
   { name: "Contact", href: "/contact" },
+  { name: "Changelog", href: "/changelog" },
 ]
 
 /**
