@@ -27,6 +27,7 @@ import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
 import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
+import { HeroSection } from "@/components/hero-section";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -402,18 +403,14 @@ export function ChatBox() {
     );
   }
 
-  // In a regular browser (not MiniPay), show a connect prompt if not connected
+  // In a regular browser (not MiniPay), show the hero landing section if not connected
   if (!isMiniPay && !isConnected) {
     return (
-      <div className="flex flex-col items-center gap-4 p-8 rounded-2xl border border-border bg-card text-card-foreground shadow-sm max-w-md mx-auto">
-        <Zap className="h-8 w-8 text-primary" />
-        <h2 className="text-lg font-semibold">Connect your wallet to use AskPay</h2>
-        <p className="text-sm text-muted-foreground text-center">
-          Connect a wallet to ask questions and pay per query on Celo Sepolia.
-        </p>
-        {/* RainbowKit button — hidden in MiniPay per checklist doc */}
-        <RainbowConnectButton />
-      </div>
+      <HeroSection
+        connectButton={
+          <RainbowConnectButton />
+        }
+      />
     );
   }
 
