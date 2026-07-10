@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 
 import { Navbar } from '@/components/navbar';
+import { SiteFooter } from '@/components/site-footer';
 import { WalletProvider } from "@/components/wallet-provider"
 
 const inter = Inter({ subsets: ['latin'] });
@@ -27,6 +28,7 @@ export default function RootLayout({
             <main className="flex-1">
               {children}
             </main>
+            <SiteFooter />
           </WalletProvider>
         </div>
       </body>
