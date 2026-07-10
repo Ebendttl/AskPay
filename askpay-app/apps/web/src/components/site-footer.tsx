@@ -4,6 +4,7 @@ import { Github } from "lucide-react"
 const footerLinks = [
   { name: "How It Works", href: "/how-it-works" },
   { name: "Pricing", href: "/pricing" },
+  { name: "Roadmap", href: "/roadmap" },
   { name: "About", href: "/about" },
   { name: "Legal", href: "/legal" },
   { name: "Contact", href: "/contact" },
