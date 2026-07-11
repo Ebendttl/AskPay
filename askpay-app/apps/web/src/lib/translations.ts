@@ -42,6 +42,18 @@ export const translations: TranslationDictionary = {
     hero_feat_speed_title: "Settled on Celo",
     hero_feat_speed_desc: "Sub-cent gas fees and 5-second transaction finality for a seamless experience.",
     hero_cta_connect: "Connect Wallet to Start",
+    hero_step_1_title: "Ask",
+    hero_step_1_detail: "Type any question into the chat. No account or subscription needed.",
+    hero_step_2_title: "Pay a few cents",
+    hero_step_2_detail: "Approve a small USDm stablecoin fee — fractions of a cent per query.",
+    hero_step_3_title: "Get your answer",
+    hero_step_3_detail: "Once the payment is confirmed on-chain, your AI answer arrives instantly.",
+    hero_step_label: "Step",
+    hero_trust_1: "Non-custodial — your keys, your funds",
+    hero_trust_2: "Open-source smart contract",
+    hero_trust_3: "Payments settle in ~5 seconds on Celo",
+    hero_trust_4: "No subscription, pay per query",
+
 
     // Empty State
     empty_state_title: "Ask a question — pay {fee} USDm per query",
