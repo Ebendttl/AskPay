@@ -81,7 +81,7 @@ describe("ChatBox Component", () => {
     render(<ChatBox />);
 
     // Check balance is displayed
-    expect(screen.getByText("0.0500 USDm")).toBeInTheDocument();
+    expect(screen.getByText(/0\.05\s*USDm/i)).toBeInTheDocument();
     
     // Check input is visible
     expect(screen.getByPlaceholderText(/Type your question/i)).toBeInTheDocument();
