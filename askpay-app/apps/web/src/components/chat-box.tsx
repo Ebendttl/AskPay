@@ -335,7 +335,7 @@ export function ChatBox() {
 
   // Clear entire history
   function handleClearHistory() {
-    if (confirm("Are you sure you want to clear your query history?")) {
+    if (confirm(t("chat_clear_history_confirm"))) {
       saveHistory([]);
       setSelectedQueryId(null);
     }
@@ -379,7 +379,7 @@ export function ChatBox() {
               {
                 id: "s-" + activeHistoryItem.queryId,
                 role: "system" as const,
-                content: "⌛ Payment transaction initiated. Please confirm in wallet...",
+                content: t("chat_payment_initiated"),
               },
             ]
           : []),
@@ -388,8 +388,7 @@ export function ChatBox() {
               {
                 id: "s-" + activeHistoryItem.queryId,
                 role: "system" as const,
-                content:
-                  "⌛ Payment confirmed on-chain. Verifying payment & generating AI response...",
+                content: t("chat_payment_confirmed_verifying"),
               },
             ]
           : []),
@@ -398,11 +397,12 @@ export function ChatBox() {
               {
                 id: "s-" + activeHistoryItem.queryId,
                 role: "system" as const,
-                content: "⚠️ Transaction or verification failed.",
+                content: t("chat_status_failed"),
               },
             ]
           : []),
       ]
+
     : [
         ...messages,
         ...(liveStreamingBubble ? [liveStreamingBubble] : []),
