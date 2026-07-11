@@ -5,6 +5,7 @@ import {
   PAY_PER_QUERY_ABI,
   PAYPERQUERY_ADDRESS_SEPOLIA,
 } from "@/lib/contracts";
+import { recordRequest, updateRequestStatus } from "@/lib/rate-limiter";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -269,6 +270,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // ── Extract IP for logging (middleware already enforced the rate limit) ────
+  const xff = req.headers.get("x-forwarded-for");
+  const ip = xff ? xff.split(",")[0]!.trim() : (req.ip ?? "unknown");
+
+  // ── Record this request in the admin log (pending until stream resolves) ──
+  const logId = recordRequest({
+    ip,
+    queryId,
+    txHash,
+    network,
+    rateLimited: false,
+    llmStatus: "pending",
+    userAgent: req.headers.get("user-agent"),
+    walletAddress: undefined, // Not available in the request body at this point
+  });
+
   // ── Payment verification (synchronous — must pass before stream opens) ───
   console.log(`[AskPay API] Verifying payment on ${network}...`, {
     txHash,
@@ -297,6 +314,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[AskPay API] Payment verification failed:", err.message);
+    updateRequestStatus(logId, "error");
     return new Response(
       JSON.stringify({ error: err.message || "Payment verification failed" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
@@ -313,6 +331,9 @@ export async function POST(req: NextRequest) {
   (async () => {
     let lastError: Error | null = null;
 
+    // Flip log entry to "streaming" as soon as we start the first attempt
+    updateRequestStatus(logId, "streaming");
+
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         if (attempt === 2) {
@@ -324,6 +345,7 @@ export async function POST(req: NextRequest) {
         // Success — write [DONE] and close
         await writer.write(encodeDone());
         await writer.close();
+        updateRequestStatus(logId, "done");
         console.log("[AskPay API] SSE stream completed successfully");
         return;
       } catch (err: any) {
@@ -337,6 +359,8 @@ export async function POST(req: NextRequest) {
       lastError?.message?.includes("AbortError") || lastError?.name === "AbortError"
         ? "The AI provider timed out. Please try again."
         : `AI response failed: ${lastError?.message ?? "Unknown error"}`;
+
+    updateRequestStatus(logId, "error");
 
     try {
       await writer.write(encodeError(friendlyMessage));
