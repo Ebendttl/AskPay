@@ -28,6 +28,7 @@ import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, P
 import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { HeroSection } from "@/components/hero-section";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,14 +49,15 @@ function shortHash(hash: string): string {
 // ---------------------------------------------------------------------------
 
 function StatusBadge({ step }: { step: string }) {
-  const labels: Record<string, { label: string; color: string }> = {
-    "checking-allowance": { label: "Checking allowance…",   color: "text-yellow-600" },
-    "approving":           { label: "Sending approve tx…",   color: "text-blue-500" },
-    "approve-confirming":  { label: "Confirming approve…",   color: "text-blue-500" },
-    "asking":              { label: "Sending payment tx…",   color: "text-purple-500" },
-    "ask-confirming":      { label: "Confirming payment…",   color: "text-purple-500" },
-    "success":             { label: "Payment confirmed ✓",   color: "text-green-600" },
-    "error":               { label: "Transaction failed",    color: "text-red-500" },
+  const { t } = useLanguage();
+  const labels: Record<string, { labelKey: string; color: string }> = {
+    "checking-allowance": { labelKey: "status_checking_allowance",   color: "text-yellow-600" },
+    "approving":           { labelKey: "status_approving",   color: "text-blue-500" },
+    "approve-confirming":  { labelKey: "status_approve_confirming",   color: "text-blue-500" },
+    "asking":              { labelKey: "status_asking",   color: "text-purple-500" },
+    "ask-confirming":      { labelKey: "status_ask_confirming",   color: "text-purple-500" },
+    "success":             { labelKey: "status_success",   color: "text-green-600" },
+    "error":               { labelKey: "status_error",   color: "text-red-500" },
   };
 
   const info = labels[step];
@@ -74,10 +76,11 @@ function StatusBadge({ step }: { step: string }) {
       {isSpinner && <Loader2 className="h-4 w-4 animate-spin" />}
       {step === "success" && <CheckCircle2 className="h-4 w-4" />}
       {step === "error" && <AlertCircle className="h-4 w-4" />}
-      <span>{info.label}</span>
+      <span>{t(info.labelKey)}</span>
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Message type (Phase 4 will add "answer" role)
