@@ -1,12 +1,8 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import { Scale, ShieldCheck, AlertTriangle, ExternalLink } from "lucide-react"
-
-export const metadata: Metadata = {
-  title: "Legal | AskPay",
-  description:
-    "Terms of Use and Privacy Notice for AskPay — an early-stage, testnet-phase pay-per-use AI chat dApp.",
-}
+import { useLanguage } from "@/hooks/useLanguage"
 
 /** ISO date of the last meaningful edit to this page */
 const LAST_UPDATED = "2026-07-10"
@@ -63,6 +59,7 @@ function Clause({ title, children }: { title: string; children: React.ReactNode 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Legal() {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
 
@@ -73,7 +70,7 @@ export default function Legal() {
           Early-Stage / Testnet Project
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground mb-4">
-          Legal
+          {t("legal_title")}
         </h1>
         <p className="text-sm text-muted-foreground">
           Last updated:{" "}
@@ -312,7 +309,7 @@ export default function Legal() {
           href="/"
           className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
         >
-          ← Back to AskPay
+          {t("back_to_chat")}
         </Link>
       </div>
 
