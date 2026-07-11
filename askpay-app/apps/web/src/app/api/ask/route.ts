@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { createPublicClient, http } from "viem";
 import { celo, celoSepolia } from "viem/chains";
 import {
@@ -10,9 +10,13 @@ import {
 // Config
 // ---------------------------------------------------------------------------
 
-// Celo Sepolia and Celo Mainnet RPCs
 const SEPOLIA_RPC = "https://forno.celo-sepolia.celo-testnet.org";
 const MAINNET_RPC = "https://forno.celo.org";
+
+/** Timeout per individual LLM provider fetch (ms) */
+const LLM_TIMEOUT_MS = 25_000;
+/** Pause between attempt #1 and attempt #2 (ms) */
+const RETRY_DELAY_MS = 300;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,79 +24,193 @@ const MAINNET_RPC = "https://forno.celo.org";
 
 interface AskRequest {
   question: string;
-  queryId: string; // string representation of the BigInt queryId
+  queryId: string;
   txHash: `0x${string}`;
   network?: "sepolia" | "mainnet";
 }
 
 // ---------------------------------------------------------------------------
-// LLM Integration
+// SSE helpers
 // ---------------------------------------------------------------------------
 
-async function getLLMResponse(question: string): Promise<string> {
+/** Encode a normal token frame: `data: {"token":"…"}\n\n` */
+function encodeToken(token: string): Uint8Array {
+  return new TextEncoder().encode(`data: ${JSON.stringify({ token })}\n\n`);
+}
+
+/** Encode the [DONE] sentinel */
+function encodeDone(): Uint8Array {
+  return new TextEncoder().encode("data: [DONE]\n\n");
+}
+
+/** Encode an error event frame */
+function encodeError(message: string): Uint8Array {
+  return new TextEncoder().encode(
+    `event: error\ndata: ${JSON.stringify({ message })}\n\n`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LLM streaming helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Stream tokens from a provider into the WritableStreamDefaultWriter.
+ * Throws on any network / API error — caller handles retry.
+ */
+async function streamFromProvider(
+  question: string,
+  writer: WritableStreamDefaultWriter<Uint8Array>
+): Promise<void> {
   const provider = process.env.LLM_API_PROVIDER?.toLowerCase() || "";
   const apiKey = process.env.LLM_API_KEY || "";
 
+  // ── Demo / mock mode ───────────────────────────────────────────────────────
   if (!apiKey) {
-    console.warn("[AskPay API] LLM_API_KEY is not configured. Running in Mock/Demo mode.");
-    return `[Demo Mode] Payment verified successfully! Your question was: "${question}". Since the LLM API key is not configured in .env.local on the server, here is a mock response. Please add LLM_API_KEY and LLM_API_PROVIDER (gemini/groq) to your environment variables to get real AI answers.`;
+    const mockAnswer = `[Demo Mode] Payment verified! Your question was: "${question}". Add LLM_API_KEY and LLM_API_PROVIDER (gemini/groq) to .env.local for real AI answers.`;
+    const words = mockAnswer.split(" ");
+    for (const word of words) {
+      await writer.write(encodeToken(word + " "));
+      await new Promise((r) => setTimeout(r, 40));
+    }
+    return;
   }
 
-  if (provider === "gemini") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: question }] }],
-        }),
-      });
+  // ── Config error ──────────────────────────────────────────────────────────
+  if (provider !== "gemini" && provider !== "groq") {
+    const msg = `[Config Error] LLM_API_PROVIDER is "${provider}". Supported values: "gemini" | "groq".`;
+    await writer.write(encodeToken(msg));
+    return;
+  }
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Gemini API error: ${res.status} - ${errorText}`);
-      }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
-      const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error("Empty response from Gemini API");
-      return text;
-    } catch (err) {
-      console.error("[AskPay API] Gemini LLM Call failed:", err);
-      throw new Error("Failed to retrieve response from Gemini API");
+  try {
+    if (provider === "gemini") {
+      await streamGemini(question, apiKey, writer, controller.signal);
+    } else {
+      await streamGroq(question, apiKey, writer, controller.signal);
     }
-  } else if (provider === "groq") {
-    const url = "https://api.groq.com/openai/v1/chat/completions";
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function streamGemini(
+  question: string,
+  apiKey: string,
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  signal: AbortSignal
+): Promise<void> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: question }] }],
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gemini API error ${res.status}: ${errorText}`);
+  }
+
+  await pipeSseLinesFromResponse(res, writer, (data) => {
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama3-8b-8192",
-          messages: [{ role: "user", content: question }],
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Groq API error: ${res.status} - ${errorText}`);
-      }
-
-      const data = await res.json();
-      const text = data.choices?.[0]?.message?.content;
-      if (!text) throw new Error("Empty response from Groq API");
-      return text;
-    } catch (err) {
-      console.error("[AskPay API] Groq LLM Call failed:", err);
-      throw new Error("Failed to retrieve response from Groq API");
+      const parsed = JSON.parse(data);
+      return parsed?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+    } catch {
+      return null;
     }
-  } else {
-    // If provider is not recognized but key is present, fallback
-    return `[Config Error] LLM_API_PROVIDER is set to "${provider}", which is unrecognized. Supported values are "gemini" or "groq".`;
+  });
+}
+
+async function streamGroq(
+  question: string,
+  apiKey: string,
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  signal: AbortSignal
+): Promise<void> {
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama3-8b-8192",
+      messages: [{ role: "user", content: question }],
+      stream: true,
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Groq API error ${res.status}: ${errorText}`);
+  }
+
+  await pipeSseLinesFromResponse(res, writer, (data) => {
+    if (data === "[DONE]") return null;
+    try {
+      const parsed = JSON.parse(data);
+      return parsed?.choices?.[0]?.delta?.content ?? null;
+    } catch {
+      return null;
+    }
+  });
+}
+
+/**
+ * Reads an SSE response body line-by-line.
+ * Calls `extractToken` on each `data:` line's payload.
+ * Writes non-null tokens to the writer.
+ */
+async function pipeSseLinesFromResponse(
+  res: Response,
+  writer: WritableStreamDefaultWriter<Uint8Array>,
+  extractToken: (data: string) => string | null
+): Promise<void> {
+  if (!res.body) throw new Error("Provider returned no response body");
+
+  const decoder = new TextDecoder();
+  const reader = res.body.getReader();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      // Keep the last (potentially incomplete) line in the buffer
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        const token = extractToken(data);
+        if (token) {
+          await writer.write(encodeToken(token));
+        }
+      }
+    }
+
+    // Flush any remaining buffer content
+    if (buffer.startsWith("data:")) {
+      const data = buffer.slice(5).trim();
+      const token = extractToken(data);
+      if (token) await writer.write(encodeToken(token));
+    }
+  } finally {
+    reader.releaseLock();
   }
 }
 
@@ -101,88 +219,141 @@ async function getLLMResponse(question: string): Promise<string> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
+  // ── Parse & validate ──────────────────────────────────────────────────────
+  let body: AskRequest;
   try {
-    const body: AskRequest = await req.json();
-    const { question, queryId, txHash, network = "sepolia" } = body;
-
-    // Validate inputs
-    if (!question || !question.trim()) {
-      return NextResponse.json({ error: "Missing or empty question" }, { status: 400 });
-    }
-    if (!queryId) {
-      return NextResponse.json({ error: "Missing queryId" }, { status: 400 });
-    }
-    if (!txHash || !txHash.startsWith("0x") || txHash.length !== 66) {
-      return NextResponse.json({ error: "Invalid transaction hash format" }, { status: 400 });
-    }
-
-    // Determine target chain & config based on the network requested
-    const isMainnet = network === "mainnet";
-    const chain = isMainnet ? celo : celoSepolia;
-    const rpcUrl = isMainnet ? MAINNET_RPC : SEPOLIA_RPC;
-
-    const contractAddress = isMainnet
-      ? (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`)
-      : PAYPERQUERY_ADDRESS_SEPOLIA;
-
-    if (!contractAddress || contractAddress === "0x") {
-      return NextResponse.json(
-        { error: `Contract address for network "${network}" is not configured on the server` },
-        { status: 500 }
-      );
-    }
-
-    console.log(`[AskPay API] Verifying payment on ${network}...`, {
-      txHash,
-      queryId,
-      contractAddress,
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
     });
+  }
 
-    // Initialize Viem Client
-    const publicClient = createPublicClient({
-      chain,
-      transport: http(rpcUrl),
+  const { question, queryId, txHash, network = "sepolia" } = body;
+
+  if (!question || !question.trim()) {
+    return new Response(JSON.stringify({ error: "Missing or empty question" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
     });
-
-    // Verify payment via the standalone use-minipay-paygate package
-    const { verifyPayment } = await import("use-minipay-paygate");
-    try {
-      await verifyPayment({
-        publicClient,
-        txHash,
-        expectedReceiver: contractAddress,
-        customEvent: {
-          abi: PAY_PER_QUERY_ABI,
-          eventName: "QueryPaid",
-          verifyArgs: (args: any) => {
-            return args.queryId === BigInt(queryId);
-          },
-        },
-      });
-    } catch (err: any) {
-      console.error("[AskPay API] Payment verification failed:", err.message);
-      return NextResponse.json(
-        { error: err.message || "Payment verification failed" },
-        { status: 400 }
-      );
-    }
-
-    console.log("[AskPay API] Payment verified successfully via use-minipay-paygate package!");
-
-    // 5. Call LLM
-    const answer = await getLLMResponse(question);
-
-    return NextResponse.json({
-      success: true,
-      answer,
-      queryId,
-      txHash,
+  }
+  if (!queryId) {
+    return new Response(JSON.stringify({ error: "Missing queryId" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
     });
-  } catch (err: any) {
-    console.error("[AskPay API] Internal Server Error:", err);
-    return NextResponse.json(
-      { error: err.message || "Internal server error" },
-      { status: 500 }
+  }
+  if (!txHash || !txHash.startsWith("0x") || txHash.length !== 66) {
+    return new Response(
+      JSON.stringify({ error: "Invalid transaction hash format" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
+
+  // ── Chain / contract config ───────────────────────────────────────────────
+  const isMainnet = network === "mainnet";
+  const chain = isMainnet ? celo : celoSepolia;
+  const rpcUrl = isMainnet ? MAINNET_RPC : SEPOLIA_RPC;
+
+  const contractAddress = isMainnet
+    ? (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS_MAINNET as `0x${string}`)
+    : PAYPERQUERY_ADDRESS_SEPOLIA;
+
+  if (!contractAddress || contractAddress === "0x") {
+    return new Response(
+      JSON.stringify({
+        error: `Contract address for network "${network}" is not configured on the server`,
+      }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // ── Payment verification (synchronous — must pass before stream opens) ───
+  console.log(`[AskPay API] Verifying payment on ${network}...`, {
+    txHash,
+    queryId,
+    contractAddress,
+  });
+
+  const publicClient = createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  });
+
+  const { verifyPayment } = await import("use-minipay-paygate");
+  try {
+    await verifyPayment({
+      publicClient,
+      txHash,
+      expectedReceiver: contractAddress,
+      customEvent: {
+        abi: PAY_PER_QUERY_ABI,
+        eventName: "QueryPaid",
+        verifyArgs: (args: any) => {
+          return args.queryId === BigInt(queryId);
+        },
+      },
+    });
+  } catch (err: any) {
+    console.error("[AskPay API] Payment verification failed:", err.message);
+    return new Response(
+      JSON.stringify({ error: err.message || "Payment verification failed" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  console.log("[AskPay API] Payment verified ✓ — opening SSE stream");
+
+  // ── Open SSE stream ───────────────────────────────────────────────────────
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+
+  // Run the LLM call in the background (don't await — return the stream immediately)
+  (async () => {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt === 2) {
+          console.warn("[AskPay API] Attempt 1 failed, retrying after delay…");
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+        }
+
+        await streamFromProvider(question, writer);
+        // Success — write [DONE] and close
+        await writer.write(encodeDone());
+        await writer.close();
+        console.log("[AskPay API] SSE stream completed successfully");
+        return;
+      } catch (err: any) {
+        lastError = err;
+        console.error(`[AskPay API] LLM attempt ${attempt} failed:`, err.message);
+      }
+    }
+
+    // Both attempts failed — emit error frame and close
+    const friendlyMessage =
+      lastError?.message?.includes("AbortError") || lastError?.name === "AbortError"
+        ? "The AI provider timed out. Please try again."
+        : `AI response failed: ${lastError?.message ?? "Unknown error"}`;
+
+    try {
+      await writer.write(encodeError(friendlyMessage));
+      await writer.close();
+    } catch (closeErr) {
+      console.error("[AskPay API] Error closing stream after failure:", closeErr);
+      writer.abort(closeErr);
+    }
+  })();
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      // Allow Next.js edge / node runtime to flush immediately
+      "X-Accel-Buffering": "no",
+    },
+  });
 }
