@@ -1,53 +1,45 @@
+"use client"
+
 import Link from "next/link"
 import { Sparkles, Coins, Zap, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+import { useLanguage } from "@/hooks/useLanguage"
 
 export interface HeroSectionProps {
-  /**
-   * Passed in from ChatBox which already holds `isMiniPay` and `isConnected`
-   * from wagmi/useMiniPay. HeroSection itself imports nothing from wagmi/viem.
-   *
-   * Render the connect button as a slot so HeroSection stays framework-agnostic.
-   */
   connectButton: React.ReactNode
 }
 
-// ── Step data ─────────────────────────────────────────────────────────────────
-
-const steps = [
-  {
-    icon: Sparkles,
-    label: "Ask",
-    detail: "Type any question into the chat. No account or subscription needed.",
-    color: "bg-violet-100 text-violet-600",
-  },
-  {
-    icon: Coins,
-    label: "Pay a few cents",
-    detail: "Approve a small USDm stablecoin fee — fractions of a cent per query.",
-    color: "bg-emerald-100 text-emerald-600",
-  },
-  {
-    icon: Zap,
-    label: "Get your answer",
-    detail: "Once the payment is confirmed on-chain, your AI answer arrives instantly.",
-    color: "bg-amber-100 text-amber-600",
-  },
-]
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-/**
- * HeroSection
- *
- * Marketing landing view shown to first-time / disconnected visitors.
- * Entirely static illustrative content — no hooks, no wagmi/viem imports,
- * no contract reads. Connection state is threaded in as a React slot
- * (connectButton) so this component stays pure.
- */
 export function HeroSection({ connectButton }: HeroSectionProps) {
+  const { t } = useLanguage()
+
+  const steps = [
+    {
+      icon: Sparkles,
+      label: t("hero_step_1_title"),
+      detail: t("hero_step_1_detail"),
+      color: "bg-violet-100 text-violet-600 dark:bg-violet-950/45 dark:text-violet-400",
+    },
+    {
+      icon: Coins,
+      label: t("hero_step_2_title"),
+      detail: t("hero_step_2_detail"),
+      color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/45 dark:text-emerald-400",
+    },
+    {
+      icon: Zap,
+      label: t("hero_step_3_title"),
+      detail: t("hero_step_3_detail"),
+      color: "bg-amber-100 text-amber-600 dark:bg-amber-950/45 dark:text-amber-400",
+    },
+  ]
+
+  const trustItems = [
+    t("hero_trust_1"),
+    t("hero_trust_2"),
+    t("hero_trust_3"),
+    t("hero_trust_4"),
+  ]
+
   return (
     <div className="flex flex-col items-center gap-16 w-full max-w-4xl mx-auto px-4 py-10">
 
@@ -56,26 +48,24 @@ export function HeroSection({ connectButton }: HeroSectionProps) {
         {/* Eyebrow badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-5">
           <Zap className="h-3.5 w-3.5" />
-          Now live on Celo
+          {t("hero_badge")}
         </div>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-[1.15] mb-5">
-          Pay-as-you-go AI,{" "}
-          <span className="text-primary">right inside MiniPay</span>
+          {t("hero_title_1")}{" "}
+          <span className="text-primary">{t("hero_title_2")}</span>
         </h1>
 
         <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl mx-auto">
-          AskPay lets you get instant AI answers using Celo stablecoins — no monthly
-          subscription, no account required. Pay a few cents per question, settled
-          on-chain in seconds.
+          {t("hero_description")}
         </p>
 
-        {/* Connect CTA — injected from ChatBox so HeroSection stays wagmi-free */}
+        {/* Connect CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           {connectButton}
           <Button asChild variant="outline" size="lg" className="rounded-xl">
             <Link href="/how-it-works">
-              How It Works
+              {t("nav_how_it_works")}
               <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
@@ -83,9 +73,9 @@ export function HeroSection({ connectButton }: HeroSectionProps) {
       </section>
 
       {/* ── 3-step visual ────────────────────────────────────────────── */}
-      <section className="w-full" aria-label="How AskPay works">
+      <section className="w-full" aria-label={t("nav_how_it_works")}>
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground text-center mb-6">
-          How it works
+          {t("nav_how_it_works")}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 relative">
@@ -108,7 +98,7 @@ export function HeroSection({ connectButton }: HeroSectionProps) {
 
                 {/* Step number */}
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                  Step {idx + 1}
+                  {t("hero_step_label")} {idx + 1}
                 </span>
 
                 {/* Label */}
@@ -124,12 +114,7 @@ export function HeroSection({ connectButton }: HeroSectionProps) {
 
       {/* ── Trust strip ──────────────────────────────────────────────── */}
       <section className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
-        {[
-          "Non-custodial — your keys, your funds",
-          "Open-source smart contract",
-          "Payments settle in ~5 seconds on Celo",
-          "No subscription, pay per query",
-        ].map((item) => (
+        {trustItems.map((item) => (
           <span key={item} className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
             {item}
