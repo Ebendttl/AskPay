@@ -600,7 +600,7 @@ export function ChatBox() {
             <div className="flex justify-between items-center text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3 text-muted-foreground/60" />
-                <span>USDm Balance</span>
+                <span>{t("chat_balance")}</span>
               </span>
               <span className="font-mono font-medium text-foreground">
                 {balanceDisplay} USDm
@@ -612,11 +612,11 @@ export function ChatBox() {
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="font-medium">
-                    Insufficient USDm balance. You need at least {feeDisplay} USDm to ask a question.
+                    {t("chat_insufficient_funds", { fee: feeDisplay })}
                   </p>
                   {ACTIVE_NETWORK === "sepolia" && (
                     <p className="text-[10px] opacity-80 mt-0.5">
-                      Testnet: use the mint script to top up your balance.
+                      {t("chat_insufficient_funds_testnet")}
                     </p>
                   )}
                 </div>
@@ -639,7 +639,7 @@ export function ChatBox() {
                 handleSubmit(e as unknown as React.FormEvent);
               }
             }}
-            placeholder={selectedQueryId ? "Type to ask a new question…" : "Type your question…"}
+            placeholder={selectedQueryId ? t("chat_placeholder_new") : t("chat_placeholder")}
             disabled={isBusy}
             rows={1}
             className="
@@ -669,10 +669,11 @@ export function ChatBox() {
             ) : (
               <Send className="h-4 w-4" />
             )}
-            {isBusy ? "Processing…" : `Ask (${feeDisplay} USDm)`}
+            {isBusy ? t("chat_button_processing") : t("chat_button_ask", { fee: feeDisplay })}
           </button>
         </form>
       </div>
+
 
       {/* Collapsible History Panel */}
       {showHistory && (
