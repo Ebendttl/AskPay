@@ -219,6 +219,18 @@ export const translations: TranslationDictionary = {
     hero_feat_speed_title: "Imewekwa kwenye Celo",
     hero_feat_speed_desc: "Ada ya gesi ya chini ya senti moja na sekunde 5 kukamilisha muamala kwa matumizi rahisi.",
     hero_cta_connect: "Unganisha Pochi ili Kuanza",
+    hero_step_1_title: "Uliza",
+    hero_step_1_detail: "Andika swali lolote kwenye soga. Hakuna akaunti au usajili unaohitajika.",
+    hero_step_2_title: "Lipa senti chache",
+    hero_step_2_detail: "Idhinisha ada ndogo ya sarafu ya USDm — sehemu ya senti kwa kila swali.",
+    hero_step_3_title: "Pata jibu lako",
+    hero_step_3_detail: "Malipo yakithibitishwa kwenye blockchain, jibu lako la AI litafika papo hapo.",
+    hero_step_label: "Hatua ya",
+    hero_trust_1: "Sio ya kizuizini — funguo zako, pesa zako",
+    hero_trust_2: "Mkataba wa smart wa vyanzo wazi",
+    hero_trust_3: "Miamala hukamilika kwa sekunde ~5 kwenye Celo",
+    hero_trust_4: "Hakuna usajili wa kila mwezi, lipa kwa swali",
+
 
     // Empty State
     empty_state_title: "Uliza swali — lipa {fee} USDm kwa kila swali",
