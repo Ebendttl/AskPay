@@ -77,7 +77,36 @@ export const PAY_PER_QUERY_ABI = [
     name: "QueryPaid",
     type: "event",
   },
+  // View: OZ Ownable — returns the current contract owner address
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Known deployment blocks — used to bound getLogs queries so public RPCs
+// don't time out scanning from genesis. Set to 0n as a safe fallback if
+// the exact block is unknown (slower but correct).
+// ---------------------------------------------------------------------------
+
+/** Approximate block at which PayPerQuery.sol was deployed on Celo Sepolia. */
+export const DEPLOY_BLOCK_SEPOLIA = BigInt(
+  process.env.NEXT_PUBLIC_DEPLOY_BLOCK_SEPOLIA ?? "0"
+);
+
+/** Approximate block at which PayPerQuery.sol was deployed on Celo Mainnet. */
+export const DEPLOY_BLOCK_MAINNET = BigInt(
+  process.env.NEXT_PUBLIC_DEPLOY_BLOCK_MAINNET ?? "0"
+);
+
+/** The deploy block for the currently active network. */
+export const DEPLOY_BLOCK =
+  ACTIVE_NETWORK === "mainnet" ? DEPLOY_BLOCK_MAINNET : DEPLOY_BLOCK_SEPOLIA;
+
 
 // ---------------------------------------------------------------------------
 // ERC20 ABI — only allowance + approve
