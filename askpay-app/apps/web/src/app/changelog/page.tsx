@@ -1,4 +1,5 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import {
   History,
@@ -11,14 +12,11 @@ import {
 } from "lucide-react"
 import { ChangelogEntry } from "@/components/changelog-entry"
 import { Button } from "@/components/ui/button"
-
-export const metadata: Metadata = {
-  title: "Changelog | AskPay",
-  description:
-    "AskPay's development log and milestones — tracking progress from the initial scaffold to mainnet-ready pay-gates on Celo.",
-}
+import { useLanguage } from "@/hooks/useLanguage"
 
 export default function Changelog() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
 
@@ -26,14 +24,13 @@ export default function Changelog() {
       <section className="container mx-auto px-4 pt-16 pb-12 max-w-2xl text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6">
           <History className="h-3.5 w-3.5" />
-          Changelog
+          {t("changelog_title")}
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground mb-4">
-          Development Log
+          {t("changelog_v1_0")}
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Tracking the progress of AskPay as we build a pay-per-use AI assistant
-          optimized for Celo and MiniPay.
+          {t("changelog_subtitle")}
         </p>
       </section>
 
@@ -43,7 +40,7 @@ export default function Changelog() {
           
           <ChangelogEntry
             date="July 10, 2026"
-            title="UX & Support Overhaul"
+            title="UX &amp; Support Overhaul"
             version="v0.4.0"
             icon={Sparkles}
             description={
@@ -58,7 +55,7 @@ export default function Changelog() {
                   Created reusable <strong className="text-foreground">EmptyState component</strong> for initial chat load.
                 </li>
                 <li>
-                  Built <strong className="text-foreground">Contact & Support form</strong> with pre-filled GitHub Issue redirection.
+                  Built <strong className="text-foreground">Contact &amp; Support form</strong> with pre-filled GitHub Issue redirection.
                 </li>
                 <li>
                   Added <strong className="text-foreground">About and Legal pages</strong> detailing the story, stack, Terms of Use, and Privacy Notice.
@@ -89,7 +86,7 @@ export default function Changelog() {
 
           <ChangelogEntry
             date="July 04, 2026"
-            title="Testnet Deployments & Hardhat Setup"
+            title="Testnet Deployments &amp; Hardhat Setup"
             version="v0.2.0"
             icon={Rocket}
             description={
@@ -114,7 +111,7 @@ export default function Changelog() {
 
           <ChangelogEntry
             date="July 03, 2026"
-            title="Web Interface & Wallet Integration"
+            title="Web Interface &amp; Wallet Integration"
             version="v0.1.5"
             icon={Wrench}
             description={
@@ -139,7 +136,7 @@ export default function Changelog() {
 
           <ChangelogEntry
             date="July 01, 2026"
-            title="Monorepo Architecture & Smart Contract Draft"
+            title="Monorepo Architecture &amp; Smart Contract Draft"
             version="v0.1.0"
             icon={Layers}
             description={
@@ -168,7 +165,7 @@ export default function Changelog() {
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 pt-16 max-w-xl text-center">
         <Button asChild size="lg" className="rounded-xl">
-          <Link href="/">Try AskPay Now</Link>
+          <Link href="/">{t("about_cta_try")}</Link>
         </Button>
       </section>
 
