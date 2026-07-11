@@ -76,8 +76,11 @@ export const translations: TranslationDictionary = {
     chat_no_history: "No questions asked yet.",
     chat_receipt: "Receipt",
     chat_payment_failed: "⚠️ Payment failed or rejected.",
+    chat_payment_initiated: "⌛ Payment transaction initiated. Please confirm in wallet...",
     chat_payment_confirmed_verifying: "⌛ Payment confirmed. Verifying on-chain & waiting for AI response...",
+    chat_status_failed: "⚠️ Transaction or verification failed.",
     chat_error_verifying: "⚠️ Error verifying query: {msg}",
+
     chat_retry: "↺ Retry",
 
     // Status Badges
