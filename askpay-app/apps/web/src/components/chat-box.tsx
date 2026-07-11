@@ -106,7 +106,9 @@ export interface HistoryItem {
 // ---------------------------------------------------------------------------
 
 export function ChatBox() {
+  const { t } = useLanguage();
   const { address, isConnected } = useAccount();
+
   const { isMiniPay, detected } = useMiniPay();
   const {
     fee,
