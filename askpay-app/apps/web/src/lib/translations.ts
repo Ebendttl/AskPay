@@ -256,8 +256,11 @@ export const translations: TranslationDictionary = {
     chat_no_history: "Hakuna maswali yaliyoulizwa bado.",
     chat_receipt: "Stakabadhi",
     chat_payment_failed: "⚠️ Malipo yameshindwa au yamekataliwa.",
+    chat_payment_initiated: "⌛ Muamala wa malipo umeanza. Tafadhali thibitisha kwenye pochi...",
     chat_payment_confirmed_verifying: "⌛ Malipo yamethibitishwa. Inathibitisha na kusubiri majibu ya AI...",
+    chat_status_failed: "⚠️ Muamala au uthibitishaji umeshindwa.",
     chat_error_verifying: "⚠️ Hitilafu ya kuthibitisha swali: {msg}",
+
     chat_retry: "↺ Jaribu Tena",
 
     // Status Badges
