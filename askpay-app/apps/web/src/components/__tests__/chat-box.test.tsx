@@ -143,8 +143,10 @@ describe("ChatBox Component", () => {
     const submitBtn = screen.getByRole("button", { name: /Ask \(0.01 USDm\)/i });
 
     // Enter question and submit
-    fireEvent.change(textarea, { target: { value: "Hello world" } });
-    fireEvent.click(submitBtn);
+    await act(async () => {
+      fireEvent.change(textarea, { target: { value: "Hello world" } });
+      fireEvent.click(submitBtn);
+    });
 
     expect(submitQuestionMock).toHaveBeenCalled();
   });
