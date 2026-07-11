@@ -47,9 +47,9 @@ export default function Pricing() {
         <section className="flex items-start gap-3 p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5">
           <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-amber-900">{t("pricing_fee_policy_title")}</h3>
+            <h3 className="text-sm font-bold text-amber-900">{t("pricing_adjustment_title")}</h3>
             <p className="text-xs text-amber-800 leading-relaxed">
-              {t("pricing_fee_policy_desc")}
+              {t("pricing_adjustment_desc")}
             </p>
           </div>
         </section>
@@ -89,7 +89,7 @@ export default function Pricing() {
           href="/"
           className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
         >
-          {t("back_to_app")}
+          {t("back_to_chat")}
         </Link>
       </div>
 
