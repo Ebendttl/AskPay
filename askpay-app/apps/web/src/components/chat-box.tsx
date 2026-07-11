@@ -682,13 +682,13 @@ export function ChatBox() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/10">
             <span className="font-semibold text-sm flex items-center gap-1.5">
               <History className="h-4 w-4 text-primary" />
-              History ({history.length})
+              {t("nav_history")} ({history.length})
             </span>
             {history.length > 0 && (
               <button
                 onClick={handleClearHistory}
                 className="text-muted-foreground hover:text-red-500 transition-colors p-1 rounded"
-                title="Clear all history"
+                title={t("chat_clear_history_title")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -700,7 +700,7 @@ export function ChatBox() {
             {history.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
                 <Clock className="h-8 w-8 opacity-25 mb-1.5" />
-                <p className="text-xs">No questions asked yet.</p>
+                <p className="text-xs">{t("chat_no_history")}</p>
               </div>
             ) : (
               history.map((item) => {
@@ -754,7 +754,7 @@ export function ChatBox() {
                           onClick={(e) => e.stopPropagation()} // don't select item when clicking link
                           className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
                         >
-                          Receipt <ExternalLink className="h-2.5 w-2.5" />
+                          {t("chat_receipt")} <ExternalLink className="h-2.5 w-2.5" />
                         </a>
                       </div>
                     )}
@@ -765,6 +765,7 @@ export function ChatBox() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
