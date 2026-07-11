@@ -252,14 +252,17 @@ export function ChatBox() {
     };
     lastStreamParamsRef.current = streamParams;
 
+    // Populate inFlightRef so the useEffect watching streamStatus can
+    // commit the answer (or mark failed) once the stream finishes.
+    inFlightRef.current = {
+      queryId: queryIdStr,
+      txHash: txHash,
+      history: currentHistory,
+    };
+
     // startStream resolves when the stream is fully consumed (done or error).
     // React state updates from the hook drive re-renders incrementally.
     await startStream(streamParams);
-
-    // After startStream resolves we read the final status via a callback
-    // pattern — but because React state is async we use a small effect-free
-    // approach: commitStreamResult is called from a useEffect watching streamStatus.
-    // (See the effect below.)
   }
 
   // Commit the stream result to messages + history when streaming finishes.
