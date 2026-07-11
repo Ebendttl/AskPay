@@ -448,7 +448,7 @@ export function ChatBox() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-sm">AskPay</span>
+            <span className="font-semibold text-sm">{t("app_title")}</span>
             <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full capitalize">
               Celo {ACTIVE_NETWORK}
             </span>
@@ -466,10 +466,10 @@ export function ChatBox() {
                   ? "bg-primary/10 border-primary/20 text-primary"
                   : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
               }`}
-              title="Toggle Query History"
+              title={t("nav_history")}
             >
               <History className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">History</span>
+              <span className="hidden sm:inline">{t("nav_history")}</span>
             </button>
           </div>
         </div>
@@ -479,10 +479,11 @@ export function ChatBox() {
           {messagesToDisplay.length === 0 && (
             <EmptyState
               Icon={Zap}
-              title={`Ask a question — pay ${feeDisplay} USDm per query`}
-              description="Your question is paid for on-chain before the AI answers it. Transaction logs and replies are stored locally in your browser."
+              title={t("empty_state_title", { fee: feeDisplay })}
+              description={t("empty_state_desc")}
             />
           )}
+
 
           {messagesToDisplay.map((msg) => {
             const isLive = msg.id === "stream-live";
