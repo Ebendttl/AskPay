@@ -1,4 +1,5 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import {
   Map,
@@ -9,14 +10,11 @@ import {
 } from "lucide-react"
 import { ChangelogEntry } from "@/components/changelog-entry"
 import { Button } from "@/components/ui/button"
-
-export const metadata: Metadata = {
-  title: "Roadmap | AskPay",
-  description:
-    "AskPay's development roadmap — shipped milestones, current in-progress objectives, and future planned directions.",
-}
+import { useLanguage } from "@/hooks/useLanguage"
 
 export default function Roadmap() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
 
@@ -24,14 +22,13 @@ export default function Roadmap() {
       <section className="container mx-auto px-4 pt-16 pb-12 max-w-2xl text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6">
           <Map className="h-3.5 w-3.5" />
-          Roadmap
+          {t("nav_roadmap")}
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground mb-4">
-          Future &amp; Direction
+          {t("roadmap_title")}
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          See what we have already shipped, what is currently in progress, and the
-          aspirational features planned for the future of AskPay.
+          {t("roadmap_subtitle")}
         </p>
       </section>
 
@@ -141,7 +138,7 @@ export default function Roadmap() {
       {/* ── Footer CTA ───────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 pt-16 max-w-xl text-center">
         <Button asChild size="lg" className="rounded-xl">
-          <Link href="/">Try AskPay</Link>
+          <Link href="/">{t("about_cta_try")}</Link>
         </Button>
       </section>
 
