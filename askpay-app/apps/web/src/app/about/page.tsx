@@ -230,7 +230,7 @@ export default function About() {
             <Link href="/">{t("about_cta_try")}</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="rounded-xl">
-            <Link href="/how-it-works">{t("nav_how")}</Link>
+            <Link href="/how-it-works">{t("nav_how_it_works")}</Link>
           </Button>
         </div>
       </section>
