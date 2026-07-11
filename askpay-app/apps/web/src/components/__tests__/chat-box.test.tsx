@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@/test/test-utils";
+import { render, screen, fireEvent, act } from "@/test/test-utils";
 import { ChatBox } from "@/components/chat-box";
 
 // Mock RainbowKit ConnectButton
