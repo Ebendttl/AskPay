@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Menu, ExternalLink } from "lucide-react"
+import { Menu, ExternalLink, Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,17 +12,32 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { ConnectButton } from "@/components/connect-button"
+import { useLanguage } from "@/hooks/useLanguage"
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "How It Works", href: "/how-it-works" },
-  { name: "About", href: "/about" },
-  { name: "Docs", href: "https://docs.celo.org", external: true },
+  { nameKey: "nav_home", href: "/" },
+  { nameKey: "nav_how_it_works", href: "/how-it-works" },
+  { nameKey: "nav_about", href: "/about" },
+  { nameKey: "nav_docs", href: "https://docs.celo.org", external: true },
 ]
 
 export function Navbar() {
   const pathname = usePathname()
+  const { locale, setLocale, t } = useLanguage()
   
+  const LanguageToggle = () => (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => setLocale(locale === "en" ? "sw" : "en")}
+      className="h-9 px-3 gap-1.5 hover:bg-muted"
+      title={locale === "en" ? "Badilisha hadi Kiswahili" : "Switch to English"}
+    >
+      <Globe className="h-4 w-4 text-muted-foreground" />
+      <span className="text-xs font-semibold uppercase">{locale}</span>
+    </Button>
+  )
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
@@ -37,9 +52,8 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
               <div className="flex items-center gap-2 mb-8">
-
                 <span className="font-bold text-lg">
-                  askpay-app
+                  {t("app_title")}
                 </span>
               </div>
               <nav className="flex flex-col gap-4">
@@ -53,13 +67,17 @@ export function Navbar() {
                       pathname === link.href ? "text-foreground" : "text-foreground/70"
                     }`}
                   >
-                    {link.name}
+                    {t(link.nameKey)}
                     {link.external && <ExternalLink className="h-4 w-4" />}
                   </Link>
                 ))}
-                <div className="mt-6 pt-6 border-t">
+                <div className="mt-6 pt-6 border-t flex flex-col gap-4">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs text-muted-foreground font-medium">Lugha / Language</span>
+                    <LanguageToggle />
+                  </div>
                   <Button asChild className="w-full">
-                  <ConnectButton />
+                    <ConnectButton />
                   </Button>
                 </div>
               </nav>
@@ -68,9 +86,8 @@ export function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-
             <span className="hidden font-bold text-xl sm:inline-block">
-              askpay-app
+              {t("app_title")}
             </span>
           </Link>
         </div>
@@ -89,12 +106,13 @@ export function Navbar() {
                   : "text-foreground/70"
               }`}
             >
-              {link.name}
+              {t(link.nameKey)}
               {link.external && <ExternalLink className="h-4 w-4" />}
             </Link>
           ))}
           
           <div className="flex items-center gap-3">
+            <LanguageToggle />
             <ConnectButton />
           </div>
         </nav>
@@ -102,3 +120,4 @@ export function Navbar() {
     </header>
   )
 }
+
