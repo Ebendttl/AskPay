@@ -84,10 +84,10 @@ describe("ChatBox Component", () => {
     expect(screen.getByText("0.0500 USDm")).toBeInTheDocument();
     
     // Check input is visible
-    expect(screen.getByPlaceholderText(/type your question here/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Type your question/i)).toBeInTheDocument();
 
     // No warning should render
-    expect(screen.queryByText(/insufficient balance/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Insufficient USDm balance/i)).not.toBeInTheDocument();
   });
 
   test("renders balance warning UI when wallet has insufficient funds", () => {
@@ -107,11 +107,9 @@ describe("ChatBox Component", () => {
 
     render(<ChatBox />);
 
-    // Warning text should be visible (using Swahili keys/text because provider uses lib/translations)
-    // English translation for chat_insufficient_funds key is "Insufficient balance. A minimum of {fee} USDm is required to submit a query."
-    // Let's verify it matches the key or the English text.
-    expect(screen.getByText(/minimum of 0.01 USDm is required/i)).toBeInTheDocument();
-    expect(screen.getByText(/testnet faucet/i)).toBeInTheDocument();
+    // Warning text should be visible matchingtranslations.ts English version
+    expect(screen.getByText(/need at least 0.01 USDm to ask a question/i)).toBeInTheDocument();
+    expect(screen.getByText(/use the mint script to top up/i)).toBeInTheDocument();
   });
 
   test("starts askQuestion flow and triggers stream on question submission", async () => {
@@ -141,8 +139,8 @@ describe("ChatBox Component", () => {
 
     render(<ChatBox />);
 
-    const textarea = screen.getByPlaceholderText(/type your question here/i);
-    const submitBtn = screen.getByRole("button", { name: /ask/i });
+    const textarea = screen.getByPlaceholderText(/Type your question/i);
+    const submitBtn = screen.getByRole("button", { name: /Ask \(0.01 USDm\)/i });
 
     // Enter question and submit
     fireEvent.change(textarea, { target: { value: "Hello world" } });
