@@ -521,12 +521,12 @@ export function ChatBox() {
           <div className="px-4 py-2 bg-muted/30 border-t border-border text-xs">
             {selectedQueryId ? (
               <div className="flex items-center justify-between text-muted-foreground">
-                <span>Viewing history item ({activeHistoryItem?.status})</span>
+                <span>{t("chat_viewing_history", { status: activeHistoryItem?.status || "" })}</span>
                 <button
                   onClick={handleNewQuestion}
                   className="text-primary hover:underline font-medium"
                 >
-                  Ask new question
+                  {t("chat_ask_new")}
                 </button>
               </div>
             ) : (
@@ -573,7 +573,7 @@ export function ChatBox() {
                     onClick={handleRetryStream}
                     className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
                   >
-                    ↺ Retry
+                    {t("chat_retry")}
                   </button>
                 )}
               </div>
@@ -587,11 +587,12 @@ export function ChatBox() {
                 onClick={handleNewQuestion}
                 className="mt-2 text-xs text-primary underline hover:no-underline"
               >
-                Ask another question
+                {t("chat_ask_another")}
               </button>
             )}
           </div>
         )}
+
 
         {/* Input */}
         {isConnected && (
