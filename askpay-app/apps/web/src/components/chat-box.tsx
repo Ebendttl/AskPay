@@ -241,9 +241,10 @@ export function ChatBox() {
         {
           id: crypto.randomUUID(),
           role: "system",
-          content: `⚠️ Payment failed or rejected.`,
+          content: t("chat_payment_failed"),
         },
       ]);
+
       return;
     }
 
