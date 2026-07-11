@@ -1,4 +1,5 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import {
   Github,
@@ -11,12 +12,7 @@ import {
 } from "lucide-react"
 import { BuilderCard } from "@/components/builder-card"
 import { Button } from "@/components/ui/button"
-
-export const metadata: Metadata = {
-  title: "About | AskPay",
-  description:
-    "The story behind AskPay — a pay-per-use AI chat app built on Celo for Proof of Ship.",
-}
+import { useLanguage } from "@/hooks/useLanguage"
 
 // ── Stack items pulled from what's actually used in the codebase ──────────────
 
@@ -102,6 +98,8 @@ const links = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function About() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-20">
 
@@ -112,11 +110,10 @@ export default function About() {
           Celo · Proof of Ship
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground mb-5">
-          About <span className="text-primary">AskPay</span>
+          {t("about_title")}
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed">
-          A pay-per-use AI chat app that settles payments on the Celo blockchain — no subscription,
-          no account, no monthly bill.
+          {t("about_subtitle")}
         </p>
       </section>
 
@@ -127,24 +124,12 @@ export default function About() {
             <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <Zap className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold">The problem it solves</h2>
+            <h2 className="text-xl font-bold">{t("about_problem_title")}</h2>
           </div>
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-            <p>
-              Most AI assistants today require a subscription — you pay $20 a month whether you ask
-              one question or a thousand. For people who want occasional, high-quality AI answers, that
-              model is wasteful and excludes anyone who can&apos;t or won&apos;t commit to a recurring charge.
-            </p>
-            <p>
-              AskPay&apos;s answer is simple: pay per query in USDm stablecoin, directly from your wallet.
-              No registration, no credit card, no account to manage. The cost of a single query is
-              small enough to be trivial — and you only pay when you actually use it.
-            </p>
-            <p>
-              The primary audience is anyone in a region where MiniPay is already the everyday
-              payment tool. For those users, AskPay is a natural extension: the same wallet they use
-              to send money to family can now answer their questions.
-            </p>
+            <p>{t("about_problem_desc_1")}</p>
+            <p>{t("about_problem_desc_2")}</p>
+            <p>{t("about_problem_desc_3")}</p>
           </div>
         </div>
       </section>
@@ -156,28 +141,11 @@ export default function About() {
             <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <Ship className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold">Built for Celo&apos;s Proof of Ship</h2>
+            <h2 className="text-xl font-bold">{t("about_pos_title")}</h2>
           </div>
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-            <p>
-              AskPay was built as part of{" "}
-              <a
-                href="https://celo.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline underline-offset-2 hover:no-underline"
-              >
-                Celo&apos;s Proof of Ship
-              </a>{" "}
-              program — a builder initiative that challenges developers to ship real, usable products on
-              Celo rather than just prototype demos.
-            </p>
-            <p>
-              The program pushes builders to go through the full product lifecycle: designing a
-              contract, deploying it to mainnet, integrating a real frontend, and making it accessible
-              to actual users — not just running on localhost. AskPay is the direct result of working
-              through that process.
-            </p>
+            <p>{t("about_pos_desc_1")}</p>
+            <p>{t("about_pos_desc_2")}</p>
           </div>
         </div>
       </section>
@@ -189,52 +157,29 @@ export default function About() {
             <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <Code2 className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-bold">Why we built this</h2>
+            <h2 className="text-xl font-bold">{t("about_why_title")}</h2>
           </div>
           <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-            <p>
-              Honestly, the starting point was curiosity: <em>what does it actually take to gate an AI
-              API response behind a verifiable on-chain payment?</em> Not a simulated payment, not a
-              trusted client claim — a real blockchain transaction the server can verify before it calls
-              the LLM.
-            </p>
-            <p>
-              Turns out the interesting part isn&apos;t the smart contract, which is pretty small. It&apos;s
-              the server-side verification layer — reading the transaction receipt, confirming the{" "}
-              <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">QueryPaid</code>{" "}
-              event was emitted with the right query ID, and only then forwarding the question to the
-              AI. Getting that plumbing solid without leaking query IDs or racing the block confirmation
-              was the interesting engineering challenge.
-            </p>
-            <p>
-              The{" "}
-              <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">use-minipay-paygate</code>{" "}
-              package came out of solving that problem cleanly enough to make it reusable. If it helps
-              another builder skip a few hours of debugging ERC-20 receipt parsing, that&apos;s a bonus.
-            </p>
-            <p>
-              This is a solo project built in spare time. It&apos;s functional, deployed on mainnet, and
-              genuinely usable — but it&apos;s early-stage software. The code is open source and the
-              contract is simple and non-upgradeable by design.
-            </p>
+            <p>{t("about_why_desc_1")}</p>
+            <p>{t("about_why_desc_2")}</p>
           </div>
         </div>
       </section>
 
       {/* ── Builder ──────────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 py-10 max-w-3xl">
-        <h2 className="text-xl font-bold mb-5">Who built it</h2>
+        <h2 className="text-xl font-bold mb-5">{t("about_builder_title")}</h2>
         <BuilderCard
           name="Ebendttl"
           role="Solo Developer"
           href="https://github.com/Ebendttl"
-          bio="Full-stack / Web3 developer building on Celo. AskPay is a Proof of Ship submission exploring pay-per-use AI tooling."
+          bio={t("about_builder_bio")}
         />
       </section>
 
       {/* ── Links ────────────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 py-10 max-w-3xl">
-        <h2 className="text-xl font-bold mb-5">Links</h2>
+        <h2 className="text-xl font-bold mb-5">{t("about_links_title")}</h2>
         <div className="space-y-3">
           {links.map(({ label, href, icon: Icon, sub }) => (
             <a
@@ -259,9 +204,9 @@ export default function About() {
 
       {/* ── Built With ───────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 py-10 max-w-3xl">
-        <h2 className="text-xl font-bold mb-2">Built with</h2>
+        <h2 className="text-xl font-bold mb-2">{t("about_built_with_title")}</h2>
         <p className="text-xs text-muted-foreground mb-6">
-          Everything listed here is actually used in the codebase — no aspirational claims.
+          {t("about_built_with_sub")}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {stack.map(({ name, detail, color }) => (
@@ -282,10 +227,10 @@ export default function About() {
       <section className="container mx-auto px-4 pt-4 pb-8 text-center max-w-xl">
         <div className="flex flex-col sm:flex-row justify-center gap-3">
           <Button asChild size="lg" className="rounded-xl">
-            <Link href="/">Try AskPay</Link>
+            <Link href="/">{t("about_cta_try")}</Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="rounded-xl">
-            <Link href="/how-it-works">How It Works</Link>
+            <Link href="/how-it-works">{t("nav_how")}</Link>
           </Button>
         </div>
       </section>
