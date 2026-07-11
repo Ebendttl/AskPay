@@ -1,7 +1,7 @@
 /**
  * ChatBox
  *
- * Phase 3 chat UI for AskPay.
+ * Phase 4 chat UI for AskPay — streaming LLM responses.
  *
  * Responsibilities:
  *  - Detect MiniPay via useMiniPay — show RainbowKit connect button only
@@ -10,20 +10,20 @@
  *  - Accept a question from the user
  *  - Drive the approve → askQuestion flow via useAskPay
  *  - Show clear pending/confirming/success/error states for every step
- *
- * Phase 4 integration point: on "success", the question + queryId will be
- * sent to /api/ask and the LLM answer will be shown in the message list.
- * For now, a placeholder confirmation is shown instead.
+ *  - Stream the LLM answer word-by-word via useStreamResponse
+ *  - Render a live assistant bubble with a blinking cursor during streaming
+ *  - Show a Retry button if the AI response fails (after payment is confirmed)
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
+import { useStreamResponse, type StreamParams } from "@/hooks/use-stream-response";
 import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
@@ -118,8 +118,12 @@ export function ChatBox() {
 
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [apiPending, setApiPending] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+
+  // Streaming hook — replaces apiPending + apiError
+  const { streamingText, status: streamStatus, errorMessage: streamError, startStream, reset: resetStream } = useStreamResponse();
+
+  // Keep a ref to the last stream params for the Retry button
+  const lastStreamParamsRef = useRef<StreamParams | null>(null);
 
   // History State
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -152,7 +156,9 @@ export function ChatBox() {
     }
   };
 
-  const isBusy = apiPending || !["idle", "success", "error"].includes(state.step);
+  const isBusy =
+    streamStatus === "streaming" ||
+    !["idle", "success", "error"].includes(state.step);
 
   const hasInsufficientFunds =
     isConnected &&
@@ -237,93 +243,86 @@ export function ChatBox() {
       return;
     }
 
-    // Step 2: Call the backend API route
-    setApiPending(true);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `⌛ Payment confirmed. Verifying on-chain & waiting for AI response...`,
-      },
-    ]);
+    // Step 2: Begin streaming the LLM response
+    const streamParams: StreamParams = {
+      question: savedQuestion,
+      queryId: queryIdStr,
+      txHash: txHash,
+      network: ACTIVE_NETWORK,
+    };
+    lastStreamParamsRef.current = streamParams;
 
-    try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: savedQuestion,
-          queryId: queryIdStr,
-          txHash: txHash,
-          network: ACTIVE_NETWORK,
-        }),
-      });
+    // startStream resolves when the stream is fully consumed (done or error).
+    // React state updates from the hook drive re-renders incrementally.
+    await startStream(streamParams);
 
-      const data = await res.json();
+    // After startStream resolves we read the final status via a callback
+    // pattern — but because React state is async we use a small effect-free
+    // approach: commitStreamResult is called from a useEffect watching streamStatus.
+    // (See the effect below.)
+  }
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to verify payment or fetch response");
-      }
+  // Commit the stream result to messages + history when streaming finishes.
+  // We track the "in-flight" query with a ref so the effect can reference it.
+  const inFlightRef = useRef<{
+    queryId: string;
+    txHash: `0x${string}`;
+    history: HistoryItem[];
+  } | null>(null);
 
-      // 3. Update history entry to answered
+  useEffect(() => {
+    if (streamStatus === "done" && inFlightRef.current) {
+      const { queryId: qId, txHash: tx, history: hist } = inFlightRef.current;
+      inFlightRef.current = null;
+
+      // Persist the full answer to history
       saveHistory(
-        currentHistory.map((item) =>
-          item.queryId === queryIdStr
-            ? { ...item, status: "answered" as const, txHash, answer: data.answer }
+        hist.map((item) =>
+          item.queryId === qId
+            ? { ...item, status: "answered" as const, txHash: tx, answer: streamingText }
             : item
         )
       );
 
-      // Remove system status message and add assistant reply
-      setMessages((prev) => {
-        const filtered = prev.filter(
-          (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
-        );
-        return [
-          ...filtered,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: data.answer,
-          },
-        ];
-      });
-    } catch (err: any) {
-      const msg = err.message || "Failed to fetch response";
-      setApiError(msg);
+      // Commit as a permanent message
+      const finalText = streamingText;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant" as const,
+          content: finalText,
+        },
+      ]);
+    }
 
-      // Update history entry to failed
+    if (streamStatus === "error" && inFlightRef.current) {
+      const { queryId: qId, history: hist } = inFlightRef.current;
+      // Don't null out inFlightRef — Retry button needs the same payload
+
       saveHistory(
-        currentHistory.map((item) =>
-          item.queryId === queryIdStr ? { ...item, status: "failed" as const } : item
+        hist.map((item) =>
+          item.queryId === qId ? { ...item, status: "failed" as const } : item
         )
       );
-
-      setMessages((prev) => {
-        const filtered = prev.filter(
-          (m) => !m.content.includes("Verifying on-chain & waiting for AI response")
-        );
-        return [
-          ...filtered,
-          {
-            id: crypto.randomUUID(),
-            role: "system",
-            content: `⚠️ Error verifying query: ${msg}`,
-          },
-        ];
-      });
-    } finally {
-      setApiPending(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamStatus]);
 
   // Allow asking another question after success/error
   function handleNewQuestion() {
     setSelectedQueryId(null);
     setMessages([]);
-    setApiError(null);
+    resetStream();
+    inFlightRef.current = null;
+    lastStreamParamsRef.current = null;
     reset();
+  }
+
+  // Retry the last stream call (payment already confirmed)
+  function handleRetryStream() {
+    if (!lastStreamParamsRef.current) return;
+    startStream(lastStreamParamsRef.current);
   }
 
   // Clear entire history
@@ -339,7 +338,19 @@ export function ChatBox() {
     ? history.find((h) => h.queryId === selectedQueryId)
     : null;
 
-  const messagesToDisplay = activeHistoryItem
+  // Build the list of messages to display, injecting a live streaming bubble
+  // when a stream is in progress.
+  const liveStreamingBubble: Message | null =
+    !activeHistoryItem && streamStatus === "streaming"
+      ? {
+          id: "stream-live",
+          role: "assistant",
+          // Show a blinking cursor until the first token arrives
+          content: streamingText || "▍",
+        }
+      : null;
+
+  const messagesToDisplay: Message[] = activeHistoryItem
     ? [
         {
           id: "q-" + activeHistoryItem.queryId,
@@ -384,7 +395,10 @@ export function ChatBox() {
             ]
           : []),
       ]
-    : messages;
+    : [
+        ...messages,
+        ...(liveStreamingBubble ? [liveStreamingBubble] : []),
+      ];
 
   // ---- Fee display ---------------------------------------------------------
   const feeDisplay = isFeeLoading
@@ -462,24 +476,35 @@ export function ChatBox() {
             />
           )}
 
-          {messagesToDisplay.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+          {messagesToDisplay.map((msg) => {
+            const isLive = msg.id === "stream-live";
+            return (
               <div
-                className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-sm"
-                    : msg.role === "system"
-                    ? "bg-muted/80 text-muted-foreground border border-border text-xs rounded-lg"
-                    : "bg-muted text-foreground rounded-bl-sm"
-                }`}
+                key={msg.id}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                {msg.content}
+                <div
+                  className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-sm"
+                      : msg.role === "system"
+                      ? "bg-muted/80 text-muted-foreground border border-border text-xs rounded-lg"
+                      : "bg-muted text-foreground rounded-bl-sm"
+                  }`}
+                >
+                  {isLive ? (
+                    <span>
+                      {streamingText}
+                      {/* Blinking block cursor */}
+                      <span className="inline-block w-[2px] h-[1em] bg-current align-middle ml-0.5 animate-pulse" />
+                    </span>
+                  ) : (
+                    msg.content
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Status bar */}
@@ -531,12 +556,24 @@ export function ChatBox() {
             {!selectedQueryId && state.step === "error" && state.errorMessage && (
               <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
             )}
-            {!selectedQueryId && apiError && (
-              <p className="text-red-500 mt-1 text-xs break-all">{apiError}</p>
+            {!selectedQueryId && streamStatus === "error" && streamError && (
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-red-500 text-xs break-all flex-1">{streamError}</p>
+                {lastStreamParamsRef.current && (
+                  <button
+                    onClick={handleRetryStream}
+                    className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
+                  >
+                    ↺ Retry
+                  </button>
+                )}
+              </div>
             )}
 
             {/* Reset after terminal states */}
-            {!selectedQueryId && (state.step === "success" || state.step === "error" || apiError) && !apiPending && (
+            {!selectedQueryId &&
+              (state.step === "success" || state.step === "error" || streamStatus === "done" || streamStatus === "error") &&
+              streamStatus !== "streaming" && (
               <button
                 onClick={handleNewQuestion}
                 className="mt-2 text-xs text-primary underline hover:no-underline"
