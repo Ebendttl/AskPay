@@ -1,14 +1,10 @@
-import type { Metadata } from "next"
+"use client"
+
 import Link from "next/link"
 import { Github, MessageSquare, HelpCircle, ExternalLink, Mail } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
 import { Button } from "@/components/ui/button"
-
-export const metadata: Metadata = {
-  title: "Contact & Support | AskPay",
-  description:
-    "Get help with AskPay — report an issue on GitHub or send a message directly.",
-}
+import { useLanguage } from "@/hooks/useLanguage"
 
 // ── Support channels ──────────────────────────────────────────────────────────
 
@@ -36,6 +32,8 @@ const channels = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Contact() {
+  const { t } = useLanguage();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-24">
 
@@ -43,14 +41,13 @@ export default function Contact() {
       <section className="container mx-auto px-4 pt-16 pb-10 max-w-2xl text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-6">
           <MessageSquare className="h-3.5 w-3.5" />
-          Support
+          {t("nav_contact")}
         </div>
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground mb-4">
-          Contact &amp; Support
+          {t("contact_title")}
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Got a question or hit a bug? Here&apos;s how to reach us. AskPay is an
-          early-stage solo project, so response times may vary — but we do read everything.
+          {t("contact_subtitle")}
         </p>
       </section>
 
@@ -63,7 +60,7 @@ export default function Contact() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-foreground mb-1">
-              Check the How It Works page first
+              {t("nav_how_it_works")}
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed mb-3">
               Common questions about the payment flow, MiniPay, USDm, and on-chain
@@ -72,7 +69,7 @@ export default function Contact() {
             <Button asChild variant="outline" size="sm" className="rounded-lg gap-1.5 text-xs">
               <Link href="/how-it-works">
                 <HelpCircle className="h-3.5 w-3.5" />
-                How It Works &amp; FAQ
+                {t("pricing_faq_cta")}
               </Link>
             </Button>
           </div>
@@ -119,7 +116,7 @@ export default function Contact() {
         <div className="p-8 rounded-2xl border border-border bg-card/50 space-y-5">
           <div>
             <h2 className="text-lg font-bold text-foreground mb-1">
-              Send a message
+              {t("contact_submit")}
             </h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
               Prefer a form? Fill this in and it will open a pre-filled GitHub Issue
@@ -137,7 +134,7 @@ export default function Contact() {
           href="/"
           className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
         >
-          ← Back to AskPay
+          {t("back_to_chat")}
         </Link>
       </div>
 
