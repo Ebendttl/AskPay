@@ -187,7 +187,6 @@ export function ChatBox() {
 
     const savedQuestion = question.trim();
     setQuestion("");
-    setApiError(null);
 
     const queryId = generateQueryId();
     const queryIdStr = queryId.toString();
