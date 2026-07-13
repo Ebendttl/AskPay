@@ -19,6 +19,7 @@ export const translations: TranslationDictionary = {
     nav_how_it_works: "How It Works",
     nav_about: "About",
     nav_dashboard: "Dashboard",
+    nav_referrals: "Referrals",
     nav_docs: "Docs",
     nav_pricing: "Pricing",
     nav_history: "History",
