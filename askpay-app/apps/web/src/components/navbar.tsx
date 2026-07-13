@@ -18,6 +18,7 @@ const navLinks = [
   { nameKey: "nav_home", href: "/" },
   { nameKey: "nav_how_it_works", href: "/how-it-works" },
   { nameKey: "nav_about", href: "/about" },
+  { nameKey: "nav_dashboard", href: "/dashboard" },
   { nameKey: "nav_docs", href: "https://docs.celo.org", external: true },
 ]
 
