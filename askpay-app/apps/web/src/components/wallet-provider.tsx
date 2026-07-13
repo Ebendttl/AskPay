@@ -1,6 +1,6 @@
 "use client";
 
-import { RainbowKitProvider, connectorsForWallets } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, connectorsForWallets, lightTheme, darkTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { injectedWallet } from "@rainbow-me/rainbowkit/wallets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { WagmiProvider, createConfig, http, useConnect } from "wagmi";
 import { celo, celoSepolia } from "wagmi/chains";
 import { ConnectButton } from "./connect-button";
+import { useTheme } from "@/lib/theme-context";
 
 const connectors = connectorsForWallets(
   [
@@ -36,6 +37,7 @@ const queryClient = new QueryClient();
 
 function WalletProviderInner({ children }: { children: React.ReactNode }) {
   const { connect, connectors } = useConnect();
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Guard: window.ethereum may be undefined outside MiniPay / in SSR context.
@@ -50,7 +52,11 @@ function WalletProviderInner({ children }: { children: React.ReactNode }) {
     }
   }, [connect, connectors]);
 
-  return <>{children}</>;
+  return (
+    <RainbowKitProvider theme={theme === "dark" ? darkTheme() : lightTheme()}>
+      {children}
+    </RainbowKitProvider>
+  );
 }
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -60,9 +66,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <WalletProviderInner>{children}</WalletProviderInner>
-        </RainbowKitProvider>
+        <WalletProviderInner>{children}</WalletProviderInner>
       </QueryClientProvider>
     </WagmiProvider>
   );
