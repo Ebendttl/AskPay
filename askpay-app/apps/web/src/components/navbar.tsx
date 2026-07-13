@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet"
 import { ConnectButton } from "@/components/connect-button"
 import { useLanguage } from "@/hooks/useLanguage"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const navLinks = [
   { nameKey: "nav_home", href: "/" },
@@ -78,6 +79,10 @@ export function Navbar() {
                     <span className="text-xs text-muted-foreground font-medium">Lugha / Language</span>
                     <LanguageToggle />
                   </div>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs text-muted-foreground font-medium">Mada / Theme</span>
+                    <ThemeToggle />
+                  </div>
                   <Button asChild className="w-full">
                     <ConnectButton />
                   </Button>
@@ -115,6 +120,7 @@ export function Navbar() {
           
           <div className="flex items-center gap-3">
             <LanguageToggle />
+            <ThemeToggle />
             <ConnectButton />
           </div>
         </nav>
