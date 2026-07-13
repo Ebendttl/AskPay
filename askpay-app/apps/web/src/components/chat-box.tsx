@@ -131,10 +131,116 @@ export function ChatBox() {
   // Keep a ref to the last stream params for the Retry button
   const lastStreamParamsRef = useRef<StreamParams | null>(null);
 
+  // Notification hook
+  const { notify, update, dismiss } = useNotifications();
+  // Track the loading-toast id so we can update it in-place as steps advance
+  const loadingToastIdRef = useRef<string | null>(null);
+
   // History State
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Fire toasts on transaction step changes
+  useEffect(() => {
+    const step = state.step;
+    const explorerUrl = ACTIVE_NETWORK === "mainnet"
+      ? "https://celoscan.io"
+      : "https://sepolia.celoscan.io";
+
+    if (step === "idle") {
+      // Dismiss any lingering loading toast on reset
+      if (loadingToastIdRef.current) {
+        dismiss(loadingToastIdRef.current);
+        loadingToastIdRef.current = null;
+      }
+      return;
+    }
+
+    if (step === "checking-allowance") {
+      const id = notify({ type: "loading", title: "Checking allowance…", duration: 0 });
+      loadingToastIdRef.current = id;
+      return;
+    }
+
+    if (step === "approving" || step === "approve-confirming") {
+      if (loadingToastIdRef.current) {
+        update(loadingToastIdRef.current, {
+          title: step === "approving" ? "Sending approve transaction…" : "Confirming approve…",
+        });
+      } else {
+        const id = notify({ type: "loading", title: "Sending approve transaction…", duration: 0 });
+        loadingToastIdRef.current = id;
+      }
+      return;
+    }
+
+    if (step === "asking" || step === "ask-confirming") {
+      if (loadingToastIdRef.current) {
+        update(loadingToastIdRef.current, {
+          title: step === "asking" ? "Sending payment transaction…" : "Confirming payment…",
+        });
+      } else {
+        const id = notify({ type: "loading", title: "Sending payment transaction…", duration: 0 });
+        loadingToastIdRef.current = id;
+      }
+      return;
+    }
+
+    if (step === "success") {
+      const id = loadingToastIdRef.current;
+      if (id) {
+        update(id, {
+          type: "success",
+          title: "Payment confirmed!",
+          message: "Fetching your AI response…",
+          txHash: state.askTxHash ?? undefined,
+          explorerUrl,
+          duration: 6000,
+        });
+        loadingToastIdRef.current = null;
+      } else {
+        notify({
+          type: "success",
+          title: "Payment confirmed!",
+          message: "Fetching your AI response…",
+          txHash: state.askTxHash ?? undefined,
+          explorerUrl,
+        });
+      }
+      return;
+    }
+
+    if (step === "error") {
+      const id = loadingToastIdRef.current;
+      const msg = state.errorMessage ?? "Transaction failed or was rejected.";
+      if (id) {
+        update(id, { type: "error", title: "Transaction failed", message: msg, duration: 8000 });
+        loadingToastIdRef.current = null;
+      } else {
+        notify({ type: "error", title: "Transaction failed", message: msg });
+      }
+      return;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.step]);
+
+  // Fire toasts on stream state changes
+  useEffect(() => {
+    if (streamStatus === "done") {
+      notify({ type: "success", title: "Answer received!", duration: 4000 });
+    }
+    if (streamStatus === "error" && streamError) {
+      notify({
+        type: "error",
+        title: "AI response failed",
+        message: streamError,
+        duration: 8000,
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamStatus]);
+
 
   // Load history from localStorage on mount
   useEffect(() => {
