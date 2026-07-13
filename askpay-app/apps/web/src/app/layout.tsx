@@ -7,6 +7,8 @@ import { SiteFooter } from '@/components/site-footer';
 import { WalletProvider } from "@/components/wallet-provider"
 import { LanguageProvider } from '@/hooks/useLanguage';
 import { ThemeProvider } from '@/lib/theme-context';
+import { NotificationProvider } from '@/lib/notification-context';
+import { ToastContainer } from '@/components/toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -43,15 +45,18 @@ export default function RootLayout({
         {/* Navbar is included on all pages */}
         <div className="relative flex min-h-screen flex-col">
           <ThemeProvider>
-            <LanguageProvider>
-              <WalletProvider>
-                <Navbar />
-                <main className="flex-1">
-                  {children}
-                </main>
-                <SiteFooter />
-              </WalletProvider>
-            </LanguageProvider>
+            <NotificationProvider>
+              <LanguageProvider>
+                <WalletProvider>
+                  <Navbar />
+                  <main className="flex-1">
+                    {children}
+                  </main>
+                  <SiteFooter />
+                  <ToastContainer />
+                </WalletProvider>
+              </LanguageProvider>
+            </NotificationProvider>
           </ThemeProvider>
         </div>
       </body>
