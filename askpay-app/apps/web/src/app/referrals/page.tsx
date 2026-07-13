@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/next"; // wait! Let's check how Link is imported: "next/link", not "next/next". Correcting this below.
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import { ArrowLeft, Users, Gift, ShieldAlert, Award } from "lucide-react";
 import { ReferralCard } from "@/components/referral-card";
-import LinkComponent from "next/link";
 
 export default function ReferralsPage() {
   const { address, isConnected } = useAccount();
@@ -13,13 +12,13 @@ export default function ReferralsPage() {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background pb-20">
       <section className="container mx-auto px-4 pt-12 pb-8 max-w-2xl">
         <div className="flex items-center gap-2 mb-3">
-          <LinkComponent
+          <Link
             href="/"
             className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
           >
             <ArrowLeft className="h-3 w-3" />
             Back to Chat
-          </LinkComponent>
+          </Link>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
           <Gift className="h-7 w-7 text-primary" />
@@ -37,12 +36,12 @@ export default function ReferralsPage() {
             <p className="text-sm text-muted-foreground">
               Connect your wallet to generate your unique referral link.
             </p>
-            <LinkComponent
+            <Link
               href="/"
               className="text-xs text-primary hover:underline font-medium"
             >
               Go to Chat →
-            </LinkComponent>
+            </Link>
           </div>
         ) : (
           <>
