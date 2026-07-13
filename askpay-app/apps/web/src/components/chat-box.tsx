@@ -29,6 +29,7 @@ import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { HeroSection } from "@/components/hero-section";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useNotifications } from "@/lib/notification-context";
 
 // ---------------------------------------------------------------------------
 // Helpers
