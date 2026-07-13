@@ -231,6 +231,7 @@ export const translations: TranslationDictionary = {
     nav_how_it_works: "Jinsi Inavyofanya Kazi",
     nav_about: "Kuhusu",
     nav_dashboard: "Dashibodi",
+    nav_referrals: "Rufaa",
     nav_docs: "Nyaraka",
     nav_pricing: "Bei",
     nav_history: "Historia",
