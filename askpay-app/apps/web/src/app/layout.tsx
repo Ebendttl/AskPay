@@ -55,6 +55,7 @@ export default function RootLayout({
                   </main>
                   <SiteFooter />
                   <ToastContainer />
+                  <OnboardingWrapper />
                 </WalletProvider>
               </LanguageProvider>
             </NotificationProvider>
