@@ -74,13 +74,14 @@ ThemeProvider
 |----------|-------|
 | `ACTIVE_NETWORK` | Driven by `NEXT_PUBLIC_NETWORK` env var; defaults to `"sepolia"` |
 | `ACTIVE_CHAIN` | `celoSepolia` when sepolia, `celo` when mainnet |
-| `PAYPERQUERY_ADDRESS` | `0x0c77e53D988059773D6E18396D449e86cF876687` (Sepolia) |
-| `USDM_ADDRESS` | `0x3c839797BA135457Eca83f8C20f2335A817899b5` (Sepolia MockERC20) |
-| Mainnet addresses | Filled in `.env.local` but **not yet activated** — `NEXT_PUBLIC_NETWORK` not set to mainnet |
+| `PAYPERQUERY_ADDRESS` (Sepolia) | `0x0c77e53D988059773D6E18396D449e86cF876687` |
+| `USDM_ADDRESS` (Sepolia) | `0x3c839797BA135457Eca83f8C20f2335A817899b5` (MockERC20) |
+| `PAYPERQUERY_ADDRESS` (Mainnet) | `0x3c839797BA135457Eca83f8C20f2335A817899b5` |
+| `USDM_ADDRESS` (Mainnet) | `0x765DE816845861e75A25fCA122bb6898B8B1282a` |
 | Explorer (Sepolia) | `https://sepolia.celoscan.io` |
 | Explorer (Mainnet) | `https://celoscan.io` |
 
-**Switching to mainnet = set `NEXT_PUBLIC_NETWORK=mainnet` in `.env.local` and fund wallet.**
+**Switching to mainnet = set `NEXT_PUBLIC_NETWORK=mainnet` in `.env.local`.**
 No code changes required.
 
 ---
@@ -116,7 +117,8 @@ interface HistoryItem {
 - PayPerQuery contract deployed on Celo Sepolia (`0x0c77e53…`)
 - MockERC20 (USDm stand-in) deployed on Sepolia
 - approve + askQuestion flow verified end-to-end via UI
-- Hardhat Ignition module for mainnet ready (not yet deployed)
+- PayPerQuery contract deployed and verified on Celo Mainnet (`0x3c839797BA135457Eca83f8C20f2335A817899b5`) using `deploy-mainnet.ts`
+- Hardhat Ignition module for mainnet ready (bypassed via deploy-mainnet.ts due to Celo RPC eth_getTransactionCount "pending" tag incompatibility)
 
 ### Phase 4: AI Streaming
 - `/api/ask` backend verifies on-chain payment, then streams LLM response word-by-word
