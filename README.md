@@ -231,7 +231,15 @@ export const PAY_PER_QUERY_ABI = [
     type: "function",
   }
 ] as const;
-```
+
+### 3. Smart Contract Deployments
+
+| Network | Contract | Address | Verification Details |
+|---|---|---|---|
+| **Celo Sepolia** | `PayPerQuery` | `0x0c77e53D988059773D6E18396D449e86cF876687` | Deployed & verified |
+| **Celo Sepolia** | `MockERC20` (USDm) | `0x3c839797BA135457Eca83f8C20f2335A817899b5` | Deployed & verified |
+| **Celo Mainnet** | `PayPerQuery` | `0x3c839797BA135457Eca83f8C20f2335A817899b5` | Deployed & verified on [Celoscan](https://celoscan.io/address/0x3c839797BA135457Eca83f8C20f2335A817899b5#code) |
+| **Celo Mainnet** | `USDm` (Stablecoin) | `0x765DE816845861e75A25fCA122bb6898B8B1282a` | Canonical ERC20 |
 
 ---
 
