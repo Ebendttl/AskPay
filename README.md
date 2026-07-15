@@ -62,52 +62,52 @@ Below is the exhaustive transaction-to-stream execution lifecycle:
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as User Wallet
+    participant User as User Wallet
     participant UI as ChatBox Frontend
     participant Contract as PayPerQuery Contract
     participant Token as USDm Token Contract
     participant API as Next.js API (/api/ask)
     participant LLM as AI Provider
 
-    Note over User, UI: Onboarding & Balance Check
+    Note over User, UI: Onboarding and Balance Check
     UI->>UI: Check localStorage for onboarding state. Display Modal if not found.
-    UI->>Token: balanceOf(User) & allowance(User, PayPerQuery)
-    Token-->>UI: Returns balance & allowance amount
+    UI->>Token: balanceOf(User) and allowance(User, PayPerQuery)
+    Token-->>UI: Returns balance and allowance amount
 
-    alt Balance is insufficient (balance < fee)
+    alt balance is less than fee
         UI->>UI: Show Insufficient Balance alert, disable input.
-    else Balance is sufficient
+    else balance is sufficient
         UI->>UI: Enable input. User submits question.
     end
 
-    Note over User, Contract: Token Allowance & Payment Execution
-    alt Allowance is less than fee
-        UI->>UI: Transition step to "checking-allowance" -> "approving"
+    Note over User, Contract: Token Allowance and Payment Execution
+    alt allowance is less than fee
+        UI->>UI: Transition step to checking-allowance then approving
         UI->>Token: approve(PayPerQuery, fee)
         Token-->>User: Request confirmation signature
         User-->>Token: Sign Approve TX
-        Token-->>UI: TX Emitted. Wait for block confirmation ("approve-confirming")
+        Token-->>UI: TX Emitted. Wait for block confirmation of approve-confirming
     end
 
-    UI->>UI: Transition step to "asking"
+    UI->>UI: Transition step to asking
     UI->>Contract: askQuestion(queryId)
     Contract->>Token: transferFrom(User, PayPerQuery, fee)
     Token-->>Contract: Confirm transfer (bool)
     Contract-->>UI: Emit QueryPaid(payer, fee, queryId, timestamp)
-    UI->>UI: Wait for block confirmation ("ask-confirming") -> "success"
+    UI->>UI: Wait for block confirmation of ask-confirming then success
 
     Note over UI, LLM: AI Stream Lifecycle
-    UI->>API: POST /api/ask { queryId, question }
-    API->>Contract: Read logs & verify QueryPaid(payer, fee, queryId) exists
-    alt QueryID Verification Fails
-        API-->>UI: Return HTTP 400/403
-    else QueryID is verified
+    UI->>API: POST /api/ask with queryId and question
+    API->>Contract: Read logs and verify QueryPaid(payer, fee, queryId) exists
+    alt verification fails
+        API-->>UI: Return HTTP 400 or 403
+    else verification succeeds
         API->>LLM: Initiate AI completion stream
         LLM-->>API: Data packets (SSE stream)
         API-->>UI: Stream packets to client
         UI->>UI: Incrementally render markdown text bubbles
     end
-    UI->>UI: Mark query as "answered" in History, persist to localStorage
+    UI->>UI: Mark query as answered in History, persist to localStorage
 ```
 
 ---
