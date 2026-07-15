@@ -9,6 +9,7 @@ import { LanguageProvider } from '@/hooks/useLanguage';
 import { ThemeProvider } from '@/lib/theme-context';
 import { NotificationProvider } from '@/lib/notification-context';
 import { ToastContainer } from '@/components/toast';
+import { OnboardingWrapper } from '@/components/onboarding-wrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
