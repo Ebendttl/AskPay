@@ -11,6 +11,7 @@
 ```
 AskPay/
 ├── MEMORY.md                         ← this file
+├── README.md                         ← Master project documentation
 └── askpay-app/                       ← pnpm/turborepo monorepo
     ├── apps/
     │   ├── web/                      ← Next.js 14 frontend (App Router)
@@ -61,11 +62,9 @@ ThemeProvider
                     ├── <Navbar />
                     ├── <main>{children}</main>
                     ├── <SiteFooter />
-                    └── <ToastContainer />  ← portal-rendered, bottom-right
+                    ├── <ToastContainer />  ← portal-rendered, bottom-right
+                    └── <OnboardingWrapper /> ← client-side first-visit checks
 ```
-
-**OnboardingWrapper** is NOT yet mounted in `layout.tsx`.
-See **In-Progress Tasks** below.
 
 ---
 
@@ -142,7 +141,7 @@ interface HistoryItem {
 ### Phase 7c: Tests
 - Vitest + jsdom configured
 - Unit tests for ChatBox and FAQAccordion
-- Custom `renderWithProviders` test utility
+- Custom `renderWithProviders` test utility (in `src/test/test-utils.tsx`) updated to mount `NotificationProvider` to fix context injection errors during ChatBox rendering tests.
 
 ### Dashboard Page
 - `/dashboard` — reads `askpay_history` from localStorage
@@ -190,29 +189,17 @@ interface HistoryItem {
 - Portal-rendered; dismiss on backdrop click or ✕ button or finish
 - Step dot indicators, animated accent gradients per step
 - `components/onboarding-wrapper.tsx` — thin wagmi adapter (reads `isConnected`, passes as prop)
+- **Wired in `layout.tsx`** under the `<WalletProvider>` tree.
+
+### Exhaustive Project Documentation
+- Created a robust developer manual in `README.md` covering the routing system, provider hierarchies, backend middleware rate-limiting scripts, signature verification, smart contract layout details, CLI tools, tests, and owner admin commands.
+- Updated sequence flows to conform to standard Mermaid parser syntax by escaping text variables and changing `actor` to `participant` declarations.
 
 ---
 
 ## In-Progress / Incomplete Tasks
 
-### 🔴 Onboarding Modal — NOT YET WIRED INTO LAYOUT
-
-`OnboardingWrapper` was created but **not added to `layout.tsx`** before the session ended.
-
-**What remains:**
-1. Import `OnboardingWrapper` in `apps/web/src/app/layout.tsx`
-2. Mount it inside `<WalletProvider>` (so wagmi context is available), below `<ToastContainer />`
-3. TypeScript check + build pass
-4. Commit
-
-**Exact change needed in layout.tsx:**
-```tsx
-// Add import:
-import { OnboardingWrapper } from '@/components/onboarding-wrapper';
-
-// Add inside <WalletProvider>, after <ToastContainer />:
-<OnboardingWrapper />
-```
+- **None.** All core features, UI flows, i18n support, tests, documentation, and layout integrations are 100% completed, verified, and operational.
 
 ---
 
