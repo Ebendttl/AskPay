@@ -14,8 +14,23 @@ import { OnboardingWrapper } from '@/components/onboarding-wrapper';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'askpay-app',
-  description: 'Pay-per-use AI chat mini app for MiniPay on Celo',
+  title: {
+    default: "AskPay — Pay-Per-Query AI on Celo",
+    template: "%s | AskPay",
+  },
+  description:
+    "Decentralized AI chat powered by Celo. Pay one micro-transaction per question — no subscriptions, no sign-ups, no data harvesting.",
+  keywords: ["AskPay", "Celo", "MiniPay", "AI chat", "pay-per-query", "USDm", "Web3"],
+  authors: [{ name: "AskPay" }],
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0D1B2A" },
+  ],
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+    shortcut: "/icon.png",
+  },
 };
 
 export default function RootLayout({
