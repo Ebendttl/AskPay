@@ -1,12 +1,15 @@
 import React from "react";
 import { render as rtlRender, RenderOptions } from "@testing-library/react";
 import { LanguageProvider } from "@/hooks/useLanguage";
+import { NotificationProvider } from "@/lib/notification-context";
 
 function AllProviders({ children }: { children: React.ReactNode }) {
   return (
-    <LanguageProvider>
-      {children}
-    </LanguageProvider>
+    <NotificationProvider>
+      <LanguageProvider>
+        {children}
+      </LanguageProvider>
+    </NotificationProvider>
   );
 }
 
