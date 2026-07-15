@@ -8,6 +8,16 @@ import {
 import { recordRequest, updateRequestStatus } from "@/lib/rate-limiter";
 
 // ---------------------------------------------------------------------------
+// Runtime / Vercel config
+// ---------------------------------------------------------------------------
+
+// Must run on Node.js — viem and the rate-limiter singleton are incompatible
+// with the Edge runtime. maxDuration extends the function timeout to 60s on
+// Vercel Pro so long LLM streams are not cut short.
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+// ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
