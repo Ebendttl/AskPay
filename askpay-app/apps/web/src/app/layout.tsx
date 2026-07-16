@@ -48,6 +48,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <meta name="talentapp:project_verification" content="de35b95d05e1c837f75ca7432529c3a590d22b713d28a1c4f518af611131a0d4e04538c0c821b668ccf3ce9620e9b16b62f362fd06b77bd4c4f663d2682aa756" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
