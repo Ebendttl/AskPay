@@ -31,6 +31,7 @@ import { HeroSection } from "@/components/hero-section";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useNotifications } from "@/lib/notification-context";
 import { PaymentConfirmationCard } from "@/components/payment-confirmation-card";
+import { RetryScheduledCard } from "@/components/retry-scheduled-card";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -449,6 +450,41 @@ export function ChatBox() {
     startStream(lastStreamParamsRef.current);
   }
 
+  /**
+   * Parse streamError to detect a retry_scheduled payload from the server.
+   * Returns null when the error is a plain string (normal LLM failure).
+   */
+  const retryScheduledPayload: { retryScheduled: true; queryId: string; txHash: string; message: string } | null =
+    (() => {
+      if (!streamError) return null;
+      try {
+        const parsed = JSON.parse(streamError);
+        if (parsed?.retryScheduled === true) return parsed;
+      } catch { /* not JSON */ }
+      return null;
+    })();
+
+  /**
+   * Called by RetryScheduledCard once the background worker delivers the answer.
+   * Commits it as an assistant message and saves it to localStorage history.
+   */
+  function handleAnswerDelivered(answer: string) {
+    setMessages((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), role: "assistant" as const, content: answer },
+    ]);
+    if (inFlightRef.current) {
+      const { queryId: qId, txHash: tx, history: hist } = inFlightRef.current;
+      saveHistory(
+        hist.map((item) =>
+          item.queryId === qId
+            ? { ...item, status: "answered" as const, txHash: tx, answer }
+            : item
+        )
+      );
+    }
+  }
+
   // Clear entire history
   function handleClearHistory() {
     if (confirm(t("chat_clear_history_confirm"))) {
@@ -705,17 +741,27 @@ export function ChatBox() {
               <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
             )}
             {!selectedQueryId && streamStatus === "error" && streamError && (
-              <div className="flex items-center gap-2 mt-1">
-                <p className="text-red-500 text-xs break-all flex-1">{streamError}</p>
-                {lastStreamParamsRef.current && (
-                  <button
-                    onClick={handleRetryStream}
-                    className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
-                  >
-                    {t("chat_retry")}
-                  </button>
-                )}
-              </div>
+              retryScheduledPayload ? (
+                <div className="mt-2">
+                  <RetryScheduledCard
+                    queryId={retryScheduledPayload.queryId}
+                    txHash={retryScheduledPayload.txHash}
+                    onAnswerDelivered={handleAnswerDelivered}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-red-500 text-xs break-all flex-1">{streamError}</p>
+                  {lastStreamParamsRef.current && (
+                    <button
+                      onClick={handleRetryStream}
+                      className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
+                    >
+                      {t("chat_retry")}
+                    </button>
+                  )}
+                </div>
+              )
             )}
 
             {/* Reset after terminal states */}
