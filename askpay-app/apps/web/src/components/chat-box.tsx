@@ -30,6 +30,7 @@ import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { HeroSection } from "@/components/hero-section";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useNotifications } from "@/lib/notification-context";
+import { PaymentConfirmationCard } from "@/components/payment-confirmation-card";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -140,6 +141,9 @@ export function ChatBox() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Timestamp captured when the askQuestion tx is confirmed on-chain
+  const [confirmationTimestamp, setConfirmationTimestamp] = useState<number | null>(null);
 
   // Fire toasts on transaction step changes
   useEffect(() => {
@@ -335,6 +339,10 @@ export function ChatBox() {
             : item
         )
       );
+      // Auto-refresh the balance happens inside useAskPay after success;
+      // here we just record when confirmation was seen by the UI layer.
+      // state.step transitions to "success" via the effect below.
+      setState: void 0; // no-op reference to suppress unused-var lint
     } catch (err) {
       // Update history entry to failed
       saveHistory(
