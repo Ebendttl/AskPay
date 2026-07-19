@@ -139,15 +139,35 @@ export function useStreamResponse(): UseStreamResponseReturn {
             const lines = message.split("\n");
             isErrorEvent = false;
 
+            let isRetryScheduledEvent = false;
+
             for (const line of lines) {
               if (line.startsWith("event:")) {
                 const eventType = line.slice(6).trim();
                 if (eventType === "error") isErrorEvent = true;
+                if (eventType === "retry_scheduled") isRetryScheduledEvent = true;
               } else if (line.startsWith("data:")) {
                 const data = line.slice(5).trim();
 
                 if (data === "[DONE]") {
                   setStatus("done");
+                  return;
+                }
+
+                if (isRetryScheduledEvent) {
+                  try {
+                    const parsed = JSON.parse(data);
+                    setStatus("error");
+                    setErrorMessage(JSON.stringify({
+                      retryScheduled: true,
+                      queryId: parsed.queryId,
+                      txHash: parsed.txHash,
+                      message: parsed.message
+                    }));
+                  } catch {
+                    setStatus("error");
+                    setErrorMessage("AI response failed. Retry scheduled.");
+                  }
                   return;
                 }
 
