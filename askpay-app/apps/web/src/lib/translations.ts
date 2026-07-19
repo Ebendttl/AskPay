@@ -23,6 +23,7 @@ export const translations: TranslationDictionary = {
     nav_docs: "Docs",
     nav_pricing: "Pricing",
     nav_history: "History",
+    nav_my_questions: "My Questions",
     nav_credits: "Credits",
     nav_roadmap: "Roadmap",
     nav_legal: "Legal",
@@ -30,6 +31,19 @@ export const translations: TranslationDictionary = {
     nav_changelog: "Changelog",
     all_rights_reserved: "All rights reserved.",
     back_to_chat: "← Back to AskPay",
+
+    // My Questions Page
+    my_questions_title: "My Questions",
+    my_questions_subtitle: "On-chain history of your paid queries on Celo.",
+    my_questions_empty: "No on-chain query transactions found for this wallet.",
+    my_questions_connect: "Please connect your wallet to view your query history.",
+    my_questions_query_id: "Query ID",
+    my_questions_timestamp: "Date & Time",
+    my_questions_amount: "Amount Paid",
+    my_questions_tx_hash: "Transaction",
+    my_questions_loading: "Fetching your on-chain queries...",
+    my_questions_total: "Total Queries",
+    my_questions_total_spent: "Total Spent",
 
     // Hero Section
     hero_badge: "Pay-per-use AI Chat",
@@ -243,6 +257,7 @@ export const translations: TranslationDictionary = {
     nav_docs: "Nyaraka",
     nav_pricing: "Bei",
     nav_history: "Historia",
+    nav_my_questions: "Maswali Yangu",
     nav_credits: "Shukrani",
     nav_roadmap: "Ramani ya Njia",
     nav_legal: "Kisheria",
@@ -250,6 +265,19 @@ export const translations: TranslationDictionary = {
     nav_changelog: "Mabadiliko",
     all_rights_reserved: "Haki zote zimehifadhiwa.",
     back_to_chat: "← Rudi kwenye AskPay",
+
+    // My Questions Page
+    my_questions_title: "Maswali Yangu",
+    my_questions_subtitle: "Historia ya maswali yako yaliyolipiwa kwenye Celo.",
+    my_questions_empty: "Hakuna miamala ya maswali iliyopatikana kwenye pochi hii.",
+    my_questions_connect: "Tafadhali unganisha pochi yako ili kuona historia ya maswali yako.",
+    my_questions_query_id: "ID ya Swali",
+    my_questions_timestamp: "Tarehe na Saa",
+    my_questions_amount: "Kiasi Kilicholipwa",
+    my_questions_tx_hash: "Muamala",
+    my_questions_loading: "Inapakia maswali yako kwenye blockchain...",
+    my_questions_total: "Jumla ya Maswali",
+    my_questions_total_spent: "Jumla Iliyotumika",
 
     // Hero Section
     hero_badge: "Mazungumzo ya AI ya Lipa Unavyotumia",
