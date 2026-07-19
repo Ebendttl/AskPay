@@ -339,10 +339,10 @@ export function ChatBox() {
             : item
         )
       );
-      // Auto-refresh the balance happens inside useAskPay after success;
-      // here we just record when confirmation was seen by the UI layer.
-      // state.step transitions to "success" via the effect below.
-      setState: void 0; // no-op reference to suppress unused-var lint
+      // Record the wall-clock time at which the UI sees the confirmed tx.
+      // Used to populate the PaymentConfirmationCard timestamp field.
+      setConfirmationTimestamp(Date.now());
+
     } catch (err) {
       // Update history entry to failed
       saveHistory(
@@ -432,14 +432,11 @@ export function ChatBox() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamStatus]);
 
-  // Allow asking another question after success/error
+  // Reset confirmation timestamp when the user starts a new session
+  const originalHandleNewQuestion = handleNewQuestion;
   function handleNewQuestion() {
-    setSelectedQueryId(null);
-    setMessages([]);
-    resetStream();
-    inFlightRef.current = null;
-    lastStreamParamsRef.current = null;
-    reset();
+    setConfirmationTimestamp(null);
+    originalHandleNewQuestion();
   }
 
   // Retry the last stream call (payment already confirmed)
