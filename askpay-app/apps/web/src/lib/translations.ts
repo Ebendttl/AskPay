@@ -98,6 +98,11 @@ export const translations: TranslationDictionary = {
     chat_error_verifying: "⚠️ Error verifying query: {msg}",
 
     chat_retry: "↺ Retry",
+    chat_retry_scheduled_title: "Payment Received — Generating Your Answer",
+    chat_retry_scheduled_body: "Your payment was confirmed on Celo. The AI provider is temporarily busy, so we are retrying in the background. Your answer will appear here automatically — no additional charge.",
+    chat_retry_scheduled_query_id: "Query ID",
+    chat_retry_scheduled_check_status: "Check Status",
+    chat_retry_scheduled_delivered: "Answer Delivered!",
 
     // Payment Confirmation Card
     confirm_card_title: "Payment Confirmed",
@@ -332,6 +337,11 @@ export const translations: TranslationDictionary = {
     chat_error_verifying: "⚠️ Hitilafu ya kuthibitisha swali: {msg}",
 
     chat_retry: "↺ Jaribu Tena",
+    chat_retry_scheduled_title: "Malipo Yamepokelewa — Tunaandaa Jibu Lako",
+    chat_retry_scheduled_body: "Malipo yako yamethibitishwa kwenye Celo. Mtoa huduma wa AI ana msongamano wa muda — tunajaribu tena nyuma ya pazia. Jibu litaonekana hapa moja kwa moja bila malipo ya ziada.",
+    chat_retry_scheduled_query_id: "Nambari ya Swali",
+    chat_retry_scheduled_check_status: "Angalia Hali",
+    chat_retry_scheduled_delivered: "Jibu Limewasilishwa!",
 
     // Payment Confirmation Card
     confirm_card_title: "Malipo Yamethibitishwa",
