@@ -85,6 +85,14 @@ export const translations: TranslationDictionary = {
 
     chat_retry: "↺ Retry",
 
+    // Payment Confirmation Card
+    confirm_card_title: "Payment Confirmed",
+    confirm_card_tx_hash: "Tx Hash",
+    confirm_card_fee_label: "Fee Paid",
+    confirm_card_time_label: "Confirmed At",
+    confirm_card_view_on_celoscan: "View on Celoscan",
+    confirm_card_aria_label: "Payment confirmation receipt",
+
     // Status Badges
     status_checking_allowance: "Checking allowance…",
     status_approving: "Sending approve tx…",
@@ -296,6 +304,14 @@ export const translations: TranslationDictionary = {
     chat_error_verifying: "⚠️ Hitilafu ya kuthibitisha swali: {msg}",
 
     chat_retry: "↺ Jaribu Tena",
+
+    // Payment Confirmation Card
+    confirm_card_title: "Malipo Yamethibitishwa",
+    confirm_card_tx_hash: "Hash ya Tx",
+    confirm_card_fee_label: "Ada Iliyolipwa",
+    confirm_card_time_label: "Imethibitishwa Saa",
+    confirm_card_view_on_celoscan: "Angalia kwenye Celoscan",
+    confirm_card_aria_label: "Stakabadhi ya uthibitisho wa malipo",
 
     // Status Badges
     status_checking_allowance: "Inakagua ruhusa…",
