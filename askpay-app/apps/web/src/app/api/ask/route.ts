@@ -6,6 +6,7 @@ import {
   PAYPERQUERY_ADDRESS_SEPOLIA,
 } from "@/lib/contracts";
 import { recordRequest, updateRequestStatus } from "@/lib/rate-limiter";
+import { saveQuery, updateQuery } from "@/lib/query-store";
 
 // ---------------------------------------------------------------------------
 // Runtime / Vercel config
