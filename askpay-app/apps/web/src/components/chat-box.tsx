@@ -432,11 +432,15 @@ export function ChatBox() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamStatus]);
 
-  // Reset confirmation timestamp when the user starts a new session
-  const originalHandleNewQuestion = handleNewQuestion;
+  // Allow asking another question after success/error
   function handleNewQuestion() {
     setConfirmationTimestamp(null);
-    originalHandleNewQuestion();
+    setSelectedQueryId(null);
+    setMessages([]);
+    resetStream();
+    inFlightRef.current = null;
+    lastStreamParamsRef.current = null;
+    reset();
   }
 
   // Retry the last stream call (payment already confirmed)
@@ -469,6 +473,17 @@ export function ChatBox() {
           content: streamingText || "▍",
         }
       : null;
+
+  // Whether to show the confirmation card in the current active chat view.
+  // Only shown when: not viewing history, tx is confirmed, fee is loaded, and
+  // timestamp was captured (card disappears once user resets with handleNewQuestion).
+  const showConfirmationCard =
+    !selectedQueryId &&
+    !activeHistoryItem &&
+    state.step === "success" &&
+    !!state.askTxHash &&
+    fee !== undefined &&
+    confirmationTimestamp !== null;
 
   const messagesToDisplay: Message[] = activeHistoryItem
     ? [
