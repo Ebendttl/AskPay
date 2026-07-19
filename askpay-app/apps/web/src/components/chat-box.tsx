@@ -641,7 +641,19 @@ export function ChatBox() {
               </div>
             );
           })}
+
+          {/* Payment confirmation card — shown once askQuestion is confirmed,
+              before the AI response streams in. Dismissed by handleNewQuestion. */}
+          {showConfirmationCard && (
+            <PaymentConfirmationCard
+              txHash={state.askTxHash!}
+              fee={fee!}
+              confirmedAt={confirmationTimestamp!}
+              explorerBaseUrl={explorerBaseUrl}
+            />
+          )}
         </div>
+
 
         {/* Status bar */}
         {(state.step !== "idle" || selectedQueryId) && (
