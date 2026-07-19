@@ -27,8 +27,12 @@ const MAINNET_RPC = "https://forno.celo.org";
 
 /** Timeout per individual LLM provider fetch (ms) */
 const LLM_TIMEOUT_MS = 25_000;
-/** Pause between attempt #1 and attempt #2 (ms) */
-const RETRY_DELAY_MS = 300;
+/** Maximum in-request LLM attempts before scheduling background retry */
+const MAX_REQUEST_ATTEMPTS = 3;
+/** Exponential-backoff delays between in-request attempts (ms) */
+const REQUEST_RETRY_DELAYS_MS = [0, 1_000, 2_500];
+/** Delays for each background-retry attempt (ms) */
+const BG_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 30_000, 60_000];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,6 +63,17 @@ function encodeDone(): Uint8Array {
 function encodeError(message: string): Uint8Array {
   return new TextEncoder().encode(
     `event: error\ndata: ${JSON.stringify({ message })}\n\n`
+  );
+}
+
+/** Encode a retry_scheduled event frame (payment received, background retry queued) */
+function encodeRetryScheduled(
+  queryId: string,
+  txHash: string,
+  message: string
+): Uint8Array {
+  return new TextEncoder().encode(
+    `event: retry_scheduled\ndata: ${JSON.stringify({ queryId, txHash, message })}\n\n`
   );
 }
 
@@ -334,30 +349,115 @@ export async function POST(req: NextRequest) {
 
   console.log("[AskPay API] Payment verified ✓ — opening SSE stream");
 
+  // ── Persist query to the store as soon as payment is verified ─────────────
+  saveQuery(queryId, { txHash, question, status: "pending" });
+
   // ── Open SSE stream ───────────────────────────────────────────────────────
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
+  /**
+   * Runs the background-retry worker (up to BG_RETRY_DELAYS_MS.length attempts).
+   * This is fully detached from the HTTP response — it resolves asynchronously
+   * and writes the final answer (if any) directly to the query store.
+   */
+  function scheduleBackgroundRetry(): void {
+    (async () => {
+      for (let bgAttempt = 1; bgAttempt <= BG_RETRY_DELAYS_MS.length; bgAttempt++) {
+        const delay = BG_RETRY_DELAYS_MS[bgAttempt - 1]!;
+        await new Promise((r) => setTimeout(r, delay));
+        console.log(
+          `[AskPay API] Background retry ${bgAttempt}/${BG_RETRY_DELAYS_MS.length} for queryId ${queryId}…`
+        );
+        try {
+          // Capture tokens into a string buffer using a lightweight mock writer
+          let bgAnswer = "";
+          const mockWriter = {
+            write: async (chunk: Uint8Array) => {
+              const text = new TextDecoder().decode(chunk);
+              if (text.startsWith("data: ")) {
+                try {
+                  const parsed = JSON.parse(text.slice(6).trimEnd().replace(/\n\n$/, ""));
+                  if (parsed?.token) bgAnswer += parsed.token;
+                } catch { /* ignore malformed frames */ }
+              }
+            },
+            close: async () => {},
+            abort: async () => {},
+          } as unknown as WritableStreamDefaultWriter<Uint8Array>;
+
+          await streamFromProvider(question, mockWriter);
+
+          if (bgAnswer.trim()) {
+            console.log(
+              `[AskPay API] Background retry ${bgAttempt} succeeded for queryId ${queryId}!`
+            );
+            updateQuery(queryId, { status: "answered", answer: bgAnswer });
+            return;
+          }
+        } catch (err: any) {
+          console.error(
+            `[AskPay API] Background retry ${bgAttempt} failed for queryId ${queryId}:`,
+            err.message
+          );
+          if (bgAttempt === BG_RETRY_DELAYS_MS.length) {
+            updateQuery(queryId, {
+              status: "failed",
+              errorMessage: `All background retries exhausted: ${err.message}`,
+            });
+          }
+        }
+      }
+    })();
+  }
+
   // Run the LLM call in the background (don't await — return the stream immediately)
   (async () => {
     let lastError: Error | null = null;
+    // Accumulate streamed tokens so we can persist the full answer on success
+    let accumulatedAnswer = "";
+
+    // Proxy writer: forwards chunks to the real SSE writer AND captures tokens
+    const proxyWriter: WritableStreamDefaultWriter<Uint8Array> = {
+      ...writer,
+      write: async (chunk: Uint8Array) => {
+        const text = new TextDecoder().decode(chunk);
+        if (text.startsWith("data: ")) {
+          try {
+            const parsed = JSON.parse(text.slice(6).trimEnd().replace(/\n\n$/, ""));
+            if (parsed?.token) accumulatedAnswer += parsed.token;
+          } catch { /* ignore malformed frames */ }
+        }
+        return writer.write(chunk);
+      },
+    } as unknown as WritableStreamDefaultWriter<Uint8Array>;
 
     // Flip log entry to "streaming" as soon as we start the first attempt
     updateRequestStatus(logId, "streaming");
+    updateQuery(queryId, { status: "streaming" });
 
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= MAX_REQUEST_ATTEMPTS; attempt++) {
+      const delayMs = REQUEST_RETRY_DELAYS_MS[attempt - 1] ?? 0;
+      if (attempt > 1) {
+        console.warn(
+          `[AskPay API] Attempt ${attempt - 1} failed — retrying after ${delayMs}ms…`
+        );
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+
       try {
-        if (attempt === 2) {
-          console.warn("[AskPay API] Attempt 1 failed, retrying after delay…");
-          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-        }
+        // Reset accumulator before each attempt to avoid token duplication
+        accumulatedAnswer = "";
+        await streamFromProvider(question, proxyWriter);
 
-        await streamFromProvider(question, writer);
-        // Success — write [DONE] and close
+        // ── Success ────────────────────────────────────────────────────────
         await writer.write(encodeDone());
         await writer.close();
         updateRequestStatus(logId, "done");
-        console.log("[AskPay API] SSE stream completed successfully");
+        updateQuery(queryId, { status: "answered", answer: accumulatedAnswer });
+        console.log(
+          `[AskPay API] SSE stream completed on attempt ${attempt} for queryId ${queryId}`
+        );
         return;
       } catch (err: any) {
         lastError = err;
@@ -365,21 +465,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Both attempts failed — emit error frame and close
-    const friendlyMessage =
-      lastError?.message?.includes("AbortError") || lastError?.name === "AbortError"
-        ? "The AI provider timed out. Please try again."
-        : `AI response failed: ${lastError?.message ?? "Unknown error"}`;
-
+    // ── All in-request attempts exhausted ─────────────────────────────────
     updateRequestStatus(logId, "error");
+    updateQuery(queryId, { status: "retrying" });
+
+    console.error(
+      `[AskPay API] All ${MAX_REQUEST_ATTEMPTS} in-request attempts failed for ` +
+        `queryId=${queryId}, txHash=${txHash}. Payment confirmed on-chain. ` +
+        `Scheduling background retry worker.`
+    );
+
+    const retryMessage =
+      "Your payment was received and recorded on Celo. " +
+      "The AI provider is temporarily busy — we are automatically retrying in the background. " +
+      `Your answer will be delivered here without any additional charge. ` +
+      `(Query ID: ${queryId})`;
 
     try {
-      await writer.write(encodeError(friendlyMessage));
+      await writer.write(encodeRetryScheduled(queryId, txHash, retryMessage));
       await writer.close();
     } catch (closeErr) {
-      console.error("[AskPay API] Error closing stream after failure:", closeErr);
+      console.error("[AskPay API] Error closing stream after scheduling retry:", closeErr);
       writer.abort(closeErr);
     }
+
+    // Detach the background retry worker — does NOT block the HTTP response
+    scheduleBackgroundRetry();
   })();
 
   return new Response(readable, {
