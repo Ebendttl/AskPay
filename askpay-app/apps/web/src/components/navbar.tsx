@@ -21,6 +21,7 @@ const navLinks = [
   { nameKey: "nav_about", href: "/about" },
   { nameKey: "nav_dashboard", href: "/dashboard" },
   { nameKey: "nav_referrals", href: "/referrals" },
+  { nameKey: "nav_my_questions", href: "/my-questions" },
   { nameKey: "nav_docs", href: "https://docs.celo.org", external: true },
 ]
 
