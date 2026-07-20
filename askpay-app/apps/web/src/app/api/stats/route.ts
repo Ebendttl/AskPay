@@ -7,6 +7,7 @@ import {
   PAYPERQUERY_ADDRESS_SEPOLIA,
   DEPLOY_BLOCK_MAINNET,
   DEPLOY_BLOCK_SEPOLIA,
+  getContractEventsInChunks,
 } from "@/lib/contracts";
 
 // ---------------------------------------------------------------------------
@@ -60,9 +61,8 @@ export async function GET(req: NextRequest) {
     });
 
     // Pull every QueryPaid event from deploy block → latest using
-    // getContractEvents, which infers args types directly from the ABI
-    // so TypeScript knows the shape of log.args.
-    const logs = await publicClient.getContractEvents({
+    // getContractEventsInChunks to circumvent RPC provider block range limits.
+    const logs = await getContractEventsInChunks(publicClient, {
       address: contractAddress,
       abi: PAY_PER_QUERY_ABI,
       eventName: "QueryPaid",
