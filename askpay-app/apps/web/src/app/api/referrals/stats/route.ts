@@ -6,6 +6,7 @@ import {
   PAYPERQUERY_ADDRESS_SEPOLIA,
   DEPLOY_BLOCK_SEPOLIA,
   DEPLOY_BLOCK_MAINNET,
+  getLogsInChunks,
 } from "@/lib/contracts";
 import { getReferralsMap } from "@/lib/referral-store";
 
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
       throw new Error("QueryPaid event ABI definition not found");
     }
 
-    const logs = await publicClient.getLogs({
+    const logs = await getLogsInChunks(publicClient, {
       address: contractAddress,
       event: queryPaidEvent,
       fromBlock: deployBlock,
