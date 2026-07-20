@@ -63,6 +63,7 @@ export function ReferralCard({ address }: ReferralCardProps) {
           type="text"
           readOnly
           value={shareUrl || "Generating link..."}
+          aria-label="Referral Link"
           className="flex-1 bg-transparent text-xs font-mono px-2 py-1.5 sm:py-0 outline-none select-all text-muted-foreground truncate"
         />
         <div className="flex gap-2 shrink-0">
