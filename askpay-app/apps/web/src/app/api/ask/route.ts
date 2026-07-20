@@ -4,6 +4,8 @@ import { celo, celoSepolia } from "viem/chains";
 import {
   PAY_PER_QUERY_ABI,
   PAYPERQUERY_ADDRESS_SEPOLIA,
+  DEPLOY_BLOCK_SEPOLIA,
+  DEPLOY_BLOCK_MAINNET,
 } from "@/lib/contracts";
 import { recordRequest, updateRequestStatus } from "@/lib/rate-limiter";
 import { saveQuery, updateQuery } from "@/lib/query-store";
@@ -43,6 +45,7 @@ interface AskRequest {
   queryId: string;
   txHash: `0x${string}`;
   network?: "sepolia" | "mainnet";
+  referrer?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -325,8 +328,9 @@ export async function POST(req: NextRequest) {
   });
 
   const { verifyPayment } = await import("use-minipay-paygate");
+  let paymentResult;
   try {
-    await verifyPayment({
+    paymentResult = await verifyPayment({
       publicClient,
       txHash,
       expectedReceiver: contractAddress,
@@ -351,6 +355,55 @@ export async function POST(req: NextRequest) {
 
   // ── Persist query to the store as soon as payment is verified ─────────────
   saveQuery(queryId, { txHash, question, status: "pending" });
+
+  // ── Handle Referral Tracking ──────────────────────────────────────────────
+  if (
+    body.referrer &&
+    typeof body.referrer === "string" &&
+    /^0x[a-fA-F0-9]{40}$/.test(body.referrer)
+  ) {
+    const referee = paymentResult.payer;
+    const referrer = body.referrer;
+    if (referee && referee.toLowerCase() !== referrer.toLowerCase()) {
+      // Check on-chain if this referee has already paid a query
+      let isNewWallet = true;
+      try {
+        const deployBlock = network === "mainnet" ? DEPLOY_BLOCK_MAINNET : DEPLOY_BLOCK_SEPOLIA;
+        const priorLogs = await publicClient.getLogs({
+          address: contractAddress,
+          event: PAY_PER_QUERY_ABI.find((x) => x.name === "QueryPaid"),
+          args: {
+            payer: referee,
+          },
+          fromBlock: deployBlock,
+          toBlock:
+            paymentResult.blockNumber - 1n >= deployBlock
+              ? paymentResult.blockNumber - 1n
+              : deployBlock,
+        });
+        const historicalLogs = priorLogs.filter(
+          (log) => log.transactionHash?.toLowerCase() !== txHash.toLowerCase()
+        );
+        isNewWallet = historicalLogs.length === 0;
+      } catch (e) {
+        console.error("[Referral] Error checking prior logs on-chain:", e);
+      }
+
+      if (isNewWallet) {
+        try {
+          const { saveReferral } = await import("@/lib/referral-store");
+          const saved = saveReferral(referee, referrer);
+          if (saved) {
+            console.log(`[Referral] Successfully mapped referee ${referee} to referrer ${referrer}`);
+          }
+        } catch (e) {
+          console.error("[Referral] Error saving referral to store:", e);
+        }
+      } else {
+        console.log(`[Referral] Referee ${referee} is not a new wallet on-chain. Skipping registration.`);
+      }
+    }
+  }
 
   // ── Open SSE stream ───────────────────────────────────────────────────────
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
