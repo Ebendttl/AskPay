@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Copy, Check, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface ReferralCardProps {
   address: string;
@@ -12,6 +13,7 @@ export function ReferralCard({ address }: ReferralCardProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [canShare, setCanShare] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -37,8 +39,8 @@ export function ReferralCard({ address }: ReferralCardProps) {
     if (!shareUrl) return;
     try {
       await navigator.share({
-        title: "AskPay — Pay-Per-Query AI on Celo",
-        text: "Check out AskPay, a pay-per-query AI chat on Celo! Ask questions and pay in USDm stablecoins.",
+        title: t("ref_card_share_title"),
+        text: t("ref_card_share_text"),
         url: shareUrl,
       });
     } catch (err) {
@@ -53,8 +55,8 @@ export function ReferralCard({ address }: ReferralCardProps) {
           <Share2 className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-foreground">Your Referral Link</h3>
-          <p className="text-xs text-muted-foreground">Share this link to invite others to AskPay</p>
+          <h3 className="text-sm font-bold text-foreground">{t("ref_card_title")}</h3>
+          <p className="text-xs text-muted-foreground">{t("ref_card_desc")}</p>
         </div>
       </div>
 
@@ -62,8 +64,8 @@ export function ReferralCard({ address }: ReferralCardProps) {
         <input
           type="text"
           readOnly
-          value={shareUrl || "Generating link..."}
-          aria-label="Referral Link"
+          value={shareUrl || t("ref_card_generating")}
+          aria-label={t("ref_card_title")}
           className="flex-1 bg-transparent text-xs font-mono px-2 py-1.5 sm:py-0 outline-none select-all text-muted-foreground truncate"
         />
         <div className="flex gap-2 shrink-0">
@@ -76,12 +78,12 @@ export function ReferralCard({ address }: ReferralCardProps) {
             {copied ? (
               <>
                 <Check className="h-3 w-3" />
-                Copied!
+                {t("ref_card_copied")}
               </>
             ) : (
               <>
                 <Copy className="h-3 w-3" />
-                Copy
+                {t("ref_card_copy")}
               </>
             )}
           </Button>
@@ -94,7 +96,7 @@ export function ReferralCard({ address }: ReferralCardProps) {
               className="flex-1 sm:flex-initial h-8 rounded-lg text-xs gap-1.5"
             >
               <Share2 className="h-3 w-3" />
-              Share
+              {t("ref_card_share")}
             </Button>
           )}
         </div>
