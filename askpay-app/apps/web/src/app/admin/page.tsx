@@ -171,7 +171,7 @@ export default async function AdminDashboard({
         abi: PAY_PER_QUERY_ABI,
         functionName: "owner",
       }),
-      publicClient.getContractEvents({
+      getContractEventsInChunks(publicClient, {
         address: contractAddress,
         abi: PAY_PER_QUERY_ABI,
         eventName: "QueryPaid",
