@@ -44,11 +44,11 @@ export default function Pricing() {
         </section>
 
         {/* ── Model adjustment disclosure ───────────────────────────────────── */}
-        <section className="flex items-start gap-3 p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5">
-          <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+        <section className="flex items-start gap-3 p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 dark:border-amber-500/20">
+          <AlertCircle className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-amber-900">{t("pricing_adjustment_title")}</h3>
-            <p className="text-xs text-amber-800 leading-relaxed">
+            <h3 className="text-sm font-bold text-amber-900 dark:text-amber-200">{t("pricing_adjustment_title")}</h3>
+            <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
               {t("pricing_adjustment_desc")}
             </p>
           </div>
