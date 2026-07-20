@@ -33,6 +33,7 @@ import { useNotifications } from "@/lib/notification-context";
 import { PaymentConfirmationCard } from "@/components/payment-confirmation-card";
 import { RetryScheduledCard } from "@/components/retry-scheduled-card";
 import { RateLimitIndicator } from "@/components/rate-limit-indicator";
+import { FeedbackWidget } from "@/components/feedback-widget";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -691,6 +692,21 @@ export function ChatBox() {
               explorerBaseUrl={explorerBaseUrl}
             />
           )}
+
+          {/* Feedback widget — shown only when a fresh answer has just finished streaming */}
+          {!selectedQueryId &&
+            streamStatus === "done" &&
+            lastStreamParamsRef.current?.queryId &&
+            address && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] px-4 py-2">
+                  <FeedbackWidget
+                    queryId={lastStreamParamsRef.current.queryId}
+                    walletAddress={address}
+                  />
+                </div>
+              </div>
+            )}
         </div>
 
 
