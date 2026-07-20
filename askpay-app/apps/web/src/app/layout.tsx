@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/lib/theme-context';
 import { NotificationProvider } from '@/lib/notification-context';
 import { ToastContainer } from '@/components/toast';
 import { OnboardingWrapper } from '@/components/onboarding-wrapper';
+import { ReferralTracker } from '@/components/referral-tracker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -79,6 +80,7 @@ export default function RootLayout({
                   <SiteFooter />
                   <ToastContainer />
                   <OnboardingWrapper />
+                  <ReferralTracker />
                 </WalletProvider>
               </LanguageProvider>
             </NotificationProvider>
