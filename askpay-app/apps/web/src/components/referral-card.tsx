@@ -11,10 +11,14 @@ interface ReferralCardProps {
 export function ReferralCard({ address }: ReferralCardProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [canShare, setCanShare] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(`${window.location.origin}/?ref=${address}`);
+      if (navigator.share) {
+        setCanShare(true);
+      }
     }
   }, [address]);
 
@@ -26,6 +30,19 @@ export function ReferralCard({ address }: ReferralCardProps) {
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy link:", err);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.share({
+        title: "AskPay — Pay-Per-Query AI on Celo",
+        text: "Check out AskPay, a pay-per-query AI chat on Celo! Ask questions and pay in USDm stablecoins.",
+        url: shareUrl,
+      });
+    } catch (err) {
+      console.log("Web Share failed or cancelled:", err);
     }
   };
 
@@ -41,31 +58,45 @@ export function ReferralCard({ address }: ReferralCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-background/50 border border-border p-2 rounded-xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-background/50 border border-border p-2 rounded-xl">
         <input
           type="text"
           readOnly
           value={shareUrl || "Generating link..."}
-          className="flex-1 bg-transparent text-xs font-mono px-2 outline-none select-all text-muted-foreground truncate"
+          className="flex-1 bg-transparent text-xs font-mono px-2 py-1.5 sm:py-0 outline-none select-all text-muted-foreground truncate"
         />
-        <Button
-          onClick={handleCopy}
-          disabled={!shareUrl}
-          size="sm"
-          className="h-8 rounded-lg text-xs gap-1.5 shrink-0"
-        >
-          {copied ? (
-            <>
-              <Check className="h-3 w-3" />
-              Copied!
-            </>
-          ) : (
-            <>
-              <Copy className="h-3 w-3" />
-              Copy
-            </>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            onClick={handleCopy}
+            disabled={!shareUrl}
+            size="sm"
+            className="flex-1 sm:flex-initial h-8 rounded-lg text-xs gap-1.5"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3" />
+                Copy
+              </>
+            )}
+          </Button>
+          {canShare && (
+            <Button
+              onClick={handleShare}
+              disabled={!shareUrl}
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-initial h-8 rounded-lg text-xs gap-1.5"
+            >
+              <Share2 className="h-3 w-3" />
+              Share
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
     </div>
   );
