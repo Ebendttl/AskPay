@@ -631,6 +631,8 @@ export function ChatBox() {
                   : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
               }`}
               title={t("nav_history")}
+              aria-label={t("nav_history")}
+              aria-expanded={showHistory}
             >
               <History className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("nav_history")}</span>
