@@ -132,6 +132,69 @@ export function OnboardingModal({ isConnected }: OnboardingModalProps) {
     }
   }, []);
 
+  // Focus trap, Esc key handler & focus restoration for accessibility
+  useEffect(() => {
+    if (!open) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleDismiss();
+        return;
+      }
+      
+      if (e.key === "Tab") {
+        const dialog = document.querySelector('div[role="dialog"]');
+        if (!dialog) return;
+        
+        // Find all focusable elements
+        const focusableElements = dialog.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length === 0) return;
+        
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+    
+    // Save current active element to restore later
+    const previousActive = document.activeElement as HTMLElement;
+
+    // Shift focus inside the modal on open
+    const focusTimeout = setTimeout(() => {
+      const dialog = document.querySelector('div[role="dialog"]') as HTMLElement;
+      if (dialog) {
+        const focusable = dialog.querySelectorAll('button, a, input');
+        if (focusable.length > 0) {
+          (focusable[0] as HTMLElement).focus();
+        } else {
+          dialog.focus();
+        }
+      }
+    }, 50);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(focusTimeout);
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previousActive && typeof previousActive.focus === "function") {
+        previousActive.focus();
+      }
+    };
+  }, [open]);
+
   function handleDismiss() {
     setOpen(false);
     try {
