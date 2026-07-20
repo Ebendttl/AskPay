@@ -141,3 +141,94 @@ export const ERC20_ABI = [
     type: "function",
   },
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Robust batch log/event fetching helpers to circumvent RPC block range limits
+// ---------------------------------------------------------------------------
+
+interface ChunkParams {
+  fromBlock: bigint;
+  toBlock?: bigint | "latest";
+  [key: string]: any;
+}
+
+/**
+ * Fetch logs in chunks of limited block ranges to prevent RPC provider range errors.
+ */
+export async function getLogsInChunks(publicClient: any, params: ChunkParams): Promise<any[]> {
+  const fromBlock = params.fromBlock;
+  const toBlock =
+    params.toBlock === "latest" || !params.toBlock
+      ? await publicClient.getBlockNumber()
+      : params.toBlock;
+
+  const isMainnet = publicClient.chain?.id === 42220 || ACTIVE_NETWORK === "mainnet";
+  const chunkSize = BigInt(isMainnet ? 5000 : 50000);
+
+  const chunks: { from: bigint; to: bigint }[] = [];
+  for (let start = fromBlock; start <= toBlock; start += chunkSize) {
+    const end = start + chunkSize - 1n;
+    chunks.push({
+      from: start,
+      to: end > toBlock ? toBlock : end,
+    });
+  }
+
+  const results: any[] = [];
+  const concurrencyLimit = 8;
+  for (let i = 0; i < chunks.length; i += concurrencyLimit) {
+    const batch = chunks.slice(i, i + concurrencyLimit);
+    const batchPromises = batch.map((chunk) =>
+      publicClient.getLogs({
+        ...params,
+        fromBlock: chunk.from,
+        toBlock: chunk.to,
+      })
+    );
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults.flat());
+  }
+
+  return results;
+}
+
+/**
+ * Fetch contract events in chunks of limited block ranges.
+ */
+export async function getContractEventsInChunks(publicClient: any, params: ChunkParams): Promise<any[]> {
+  const fromBlock = params.fromBlock;
+  const toBlock =
+    params.toBlock === "latest" || !params.toBlock
+      ? await publicClient.getBlockNumber()
+      : params.toBlock;
+
+  const isMainnet = publicClient.chain?.id === 42220 || ACTIVE_NETWORK === "mainnet";
+  const chunkSize = BigInt(isMainnet ? 5000 : 50000);
+
+  const chunks: { from: bigint; to: bigint }[] = [];
+  for (let start = fromBlock; start <= toBlock; start += chunkSize) {
+    const end = start + chunkSize - 1n;
+    chunks.push({
+      from: start,
+      to: end > toBlock ? toBlock : end,
+    });
+  }
+
+  const results: any[] = [];
+  const concurrencyLimit = 8;
+  for (let i = 0; i < chunks.length; i += concurrencyLimit) {
+    const batch = chunks.slice(i, i + concurrencyLimit);
+    const batchPromises = batch.map((chunk) =>
+      publicClient.getContractEvents({
+        ...params,
+        fromBlock: chunk.from,
+        toBlock: chunk.to,
+      })
+    );
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults.flat());
+  }
+
+  return results;
+}
+
