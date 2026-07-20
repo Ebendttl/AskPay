@@ -37,6 +37,7 @@ export function Navbar() {
       onClick={() => setLocale(locale === "en" ? "sw" : "en")}
       className="h-9 px-3 gap-1.5 hover:bg-muted"
       title={locale === "en" ? "Badilisha hadi Kiswahili" : "Switch to English"}
+      aria-label={locale === "en" ? "Badilisha lugha kuwa Kiswahili" : "Switch language to English"}
     >
       <Globe className="h-4 w-4 text-muted-foreground" />
       <span className="text-xs font-semibold uppercase">{locale}</span>
