@@ -16,7 +16,7 @@ export function ReferralCard({ address }: ReferralCardProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(`${window.location.origin}/?ref=${address}`);
-      if (navigator.share) {
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
         setCanShare(true);
       }
     }
