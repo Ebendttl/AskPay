@@ -25,7 +25,8 @@ import {
   USDM_ADDRESS_SEPOLIA,
   DEPLOY_BLOCK_MAINNET,
   DEPLOY_BLOCK_SEPOLIA,
-  ACTIVE_NETWORK
+  ACTIVE_NETWORK,
+  getContractEventsInChunks,
 } from "@/lib/contracts";
 import { getRequestLog, getRequestLogCount, rateLimiterConfig } from "@/lib/rate-limiter";
 
