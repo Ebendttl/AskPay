@@ -1,6 +1,7 @@
 "use client";
 
 import { Gauge } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface RateLimitIndicatorProps {
   remaining: number | null;
@@ -18,6 +19,8 @@ interface RateLimitIndicatorProps {
  *   red    — last request or 0   (≤ 1)
  */
 export function RateLimitIndicator({ remaining, max }: RateLimitIndicatorProps) {
+  const { t } = useLanguage();
+
   // Don't render until we have a real reading
   if (remaining === null) return null;
 
@@ -33,7 +36,7 @@ export function RateLimitIndicator({ remaining, max }: RateLimitIndicatorProps) 
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium tabular-nums transition-colors ${colour}`}
-      title={`Rate limit: ${remaining} of ${max} requests remaining in the current 60-second window`}
+      title={t("rate_limit_tooltip", { remaining: remaining ?? 0, max })}
     >
       <Gauge className="h-2.5 w-2.5 shrink-0" />
       {remaining}/{max}
