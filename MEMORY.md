@@ -2,7 +2,7 @@
 
 > **Purpose:** Ground-truth reference for Antigravity to avoid hallucination on future decisions.
 > Updated whenever a feature is completed or a decision is made.
-> Last updated: 2026-07-15
+> Last updated: 2026-07-20
 
 ---
 
@@ -197,11 +197,21 @@ interface HistoryItem {
 - Created a robust developer manual in `README.md` covering the routing system, provider hierarchies, backend middleware rate-limiting scripts, signature verification, smart contract layout details, CLI tools, tests, and owner admin commands.
 - Updated sequence flows to conform to standard Mermaid parser syntax by escaping text variables and changing `actor` to `participant` declarations.
 
+### Phase 8: Accessibility & WCAG Audit
+- Conducted a systematic static/manual WCAG 2.1 AA audit of home, pricing, referrals, and dashboard pages.
+- Implemented focus trapping, Escape dismiss listener, and focus restoration for `OnboardingModal`.
+- Added role, tabIndex, Enter/Space key listeners, and visible outline focus states to interactive history logs in `ChatBox`.
+- Added translated `aria-label` tags to icon-only buttons (trash/clear, history panel toggle, and language switcher).
+- Linked FAQ accordion triggers and panels with `aria-controls`, IDs, and `role="region"`.
+- Corrected dark-mode color contrast ratios for amber text disclosures in pricing page.
+- Refactored `pricing-table.tsx` to move flex layouts out of direct table cell `td` elements into inner wraps.
+- Created `onboarding-modal.test.tsx` to test focus trap wrapping and keyboard events automatically.
+
 ---
 
 ## In-Progress / Incomplete Tasks
 
-- **None.** All core features, UI flows, i18n support, tests, documentation, and layout integrations are 100% completed, verified, and operational.
+- **None.** All core features, UI flows, i18n support, tests, documentation, layout integrations, and accessibility compliance are 100% completed, verified, and operational.
 
 ---
 
