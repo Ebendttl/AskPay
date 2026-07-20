@@ -32,6 +32,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useNotifications } from "@/lib/notification-context";
 import { PaymentConfirmationCard } from "@/components/payment-confirmation-card";
 import { RetryScheduledCard } from "@/components/retry-scheduled-card";
+import { RateLimitIndicator } from "@/components/rate-limit-indicator";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -128,7 +129,7 @@ export function ChatBox() {
   const [messages, setMessages] = useState<Message[]>([]);
 
   // Streaming hook — replaces apiPending + apiError
-  const { streamingText, status: streamStatus, errorMessage: streamError, startStream, reset: resetStream } = useStreamResponse();
+  const { streamingText, status: streamStatus, errorMessage: streamError, rateLimitRemaining, rateLimitMax, retryAfterSeconds, startStream, reset: resetStream } = useStreamResponse();
 
   // Keep a ref to the last stream params for the Retry button
   const lastStreamParamsRef = useRef<StreamParams | null>(null);
@@ -741,27 +742,46 @@ export function ChatBox() {
               <p className="text-red-500 mt-1 text-xs break-all">{state.errorMessage}</p>
             )}
             {!selectedQueryId && streamStatus === "error" && streamError && (
-              retryScheduledPayload ? (
-                <div className="mt-2">
-                  <RetryScheduledCard
-                    queryId={retryScheduledPayload.queryId}
-                    txHash={retryScheduledPayload.txHash}
-                    onAnswerDelivered={handleAnswerDelivered}
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-red-500 text-xs break-all flex-1">{streamError}</p>
-                  {lastStreamParamsRef.current && (
-                    <button
-                      onClick={handleRetryStream}
-                      className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
-                    >
-                      {t("chat_retry")}
-                    </button>
-                  )}
-                </div>
-              )
+              (() => {
+                // 429 rate-limit — friendly inline message
+                if (streamError.startsWith("__rate_limited__:")) {
+                  const secs = retryAfterSeconds ?? parseInt(streamError.split(":")[1] ?? "60", 10);
+                  return (
+                    <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
+                      <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-semibold">Request limit reached for this window</p>
+                        <p className="mt-0.5 opacity-90">
+                          You've used all {rateLimitMax} requests allowed per minute. This is a temporary window — not a ban.
+                          Try again in approximately <span className="font-bold">{secs} second{secs === 1 ? "" : "s"}</span>.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                // retry_scheduled payload or generic error
+                return retryScheduledPayload ? (
+                  <div className="mt-2">
+                    <RetryScheduledCard
+                      queryId={retryScheduledPayload.queryId}
+                      txHash={retryScheduledPayload.txHash}
+                      onAnswerDelivered={handleAnswerDelivered}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-red-500 text-xs break-all flex-1">{streamError}</p>
+                    {lastStreamParamsRef.current && (
+                      <button
+                        onClick={handleRetryStream}
+                        className="text-xs text-primary border border-primary/30 px-2 py-0.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
+                      >
+                        {t("chat_retry")}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()
             )}
 
             {/* Reset after terminal states */}
@@ -787,9 +807,12 @@ export function ChatBox() {
                 <Clock className="h-3 w-3 text-muted-foreground/60" />
                 <span>{t("chat_balance")}</span>
               </span>
-              <span className="font-mono font-medium text-foreground">
-                {balanceDisplay} USDm
-              </span>
+              <div className="flex items-center gap-2">
+                <RateLimitIndicator remaining={rateLimitRemaining} max={rateLimitMax} />
+                <span className="font-mono font-medium text-foreground">
+                  {balanceDisplay} USDm
+                </span>
+              </div>
             </div>
 
             {hasInsufficientFunds && (
