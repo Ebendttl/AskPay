@@ -899,6 +899,7 @@ export function ChatBox() {
                 onClick={handleClearHistory}
                 className="text-muted-foreground hover:text-red-500 transition-colors p-1 rounded"
                 title={t("chat_clear_history_title")}
+                aria-label={t("chat_clear_history_title")}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
