@@ -59,20 +59,13 @@ export async function GET(req: NextRequest) {
       transport: http(rpcUrl),
     });
 
-    // Pull every QueryPaid event from deploy block → latest.
-    // Forno (public Celo RPC) supports getLogs with a block range
-    // and does not require pagination for moderate event counts.
-    const queryPaidEventDef = PAY_PER_QUERY_ABI.find(
-      (x) => x.type === "event" && x.name === "QueryPaid"
-    );
-
-    if (!queryPaidEventDef) {
-      throw new Error("QueryPaid event ABI not found in PAY_PER_QUERY_ABI");
-    }
-
-    const logs = await publicClient.getLogs({
+    // Pull every QueryPaid event from deploy block → latest using
+    // getContractEvents, which infers args types directly from the ABI
+    // so TypeScript knows the shape of log.args.
+    const logs = await publicClient.getContractEvents({
       address: contractAddress,
-      event: queryPaidEventDef as any,
+      abi: PAY_PER_QUERY_ABI,
+      eventName: "QueryPaid",
       fromBlock: deployBlock,
       toBlock: "latest",
     });
