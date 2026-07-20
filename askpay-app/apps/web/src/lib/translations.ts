@@ -299,7 +299,18 @@ export const translations: TranslationDictionary = {
     stats_calc_title: "How these numbers are calculated",
     stats_calc_desc: "All three metrics are derived by scanning every QueryPaid event emitted by the PayPerQuery contract using viem's getLogs from the deployment block to latest. No backend database — purely on-chain. Results are cached for up to 5 minutes via Next.js ISR.",
     stats_view_on_celoscan: "View on Celoscan",
-    stats_contract_label: "Contract"
+    stats_contract_label: "Contract",
+
+    // Feedback Widget
+    feedback_prompt: "Was this answer helpful?",
+    feedback_thumbs_up: "Thumbs up",
+    feedback_thumbs_down: "Thumbs down",
+    feedback_comment_placeholder: "Optional: tell us more (max 500 chars)",
+    feedback_submit: "Submit feedback",
+    feedback_submitting: "Submitting…",
+    feedback_thanks: "Thanks for your feedback!",
+    feedback_error: "Could not save feedback — please try again.",
+    feedback_already_submitted: "You've already rated this answer."
   },
   sw: {
     // Navigation / General
@@ -588,6 +599,17 @@ export const translations: TranslationDictionary = {
     stats_calc_title: "Jinsi nambari hizi zinavyohesabiwa",
     stats_calc_desc: "Vipimo vyote vitatu vinatokana na kuchanganua kila tukio la QueryPaid lililotolewa na mkataba wa PayPerQuery kwa kutumia getLogs ya viem kutoka kwenye kitalu cha kwanza cha uwekaji hadi cha sasa. Hakuna hifadhidata ya nyuma — yote ni ya blockchain pekee. Matokeo yanahifadhiwa kwa hadi dakika 5 kupitia ISR ya Next.js.",
     stats_view_on_celoscan: "Tazama kwenye Celoscan",
-    stats_contract_label: "Mkataba"
+    stats_contract_label: "Mkataba",
+
+    // Feedback Widget
+    feedback_prompt: "Je, jibu hili lilikuwa na msaada?",
+    feedback_thumbs_up: "Kidole juu",
+    feedback_thumbs_down: "Kidole chini",
+    feedback_comment_placeholder: "Hiari: tuambie zaidi (hadi herufi 500)",
+    feedback_submit: "Tuma maoni",
+    feedback_submitting: "Inatuma…",
+    feedback_thanks: "Asante kwa maoni yako!",
+    feedback_error: "Imeshindwa kuhifadhi maoni — tafadhali jaribu tena.",
+    feedback_already_submitted: "Tayari umekadiriwa jibu hili."
   }
 };
