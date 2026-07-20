@@ -930,8 +930,16 @@ export function ChatBox() {
                 return (
                   <div
                     key={item.queryId}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedQueryId(isSelected ? null : item.queryId)}
-                    className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 relative group ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedQueryId(isSelected ? null : item.queryId);
+                      }
+                    }}
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 relative group focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
                       isSelected
                         ? "bg-muted/80 border-primary"
                         : "bg-card border-border/80 hover:bg-muted/30 hover:border-border"
