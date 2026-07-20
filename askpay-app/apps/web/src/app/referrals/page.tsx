@@ -6,12 +6,14 @@ import { useAccount } from "wagmi";
 import { ArrowLeft, Users, Gift, Info, Award, Loader2 } from "lucide-react";
 import { ReferralCard } from "@/components/referral-card";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function ReferralsPage() {
   const { address, isConnected } = useAccount();
   const [stats, setStats] = useState<{ count: number; friends: string[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!address || !isConnected) {
@@ -56,15 +58,15 @@ export default function ReferralsPage() {
             className="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 group"
           >
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-0.5 transition-transform" />
-            Back to Chat
+            {t("back_to_chat")}
           </Link>
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
           <Gift className="h-7 w-7 text-primary animate-pulse" />
-          Referrals
+          {t("referrals_title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Share AskPay with your friends and build the network on Celo.
+          {t("referrals_subtitle")}
         </p>
       </section>
 
@@ -73,13 +75,13 @@ export default function ReferralsPage() {
           <div className="flex flex-col items-center gap-4 p-12 rounded-2xl border border-border bg-card/50 text-center">
             <Users className="h-10 w-10 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              Connect your wallet to generate your unique referral link.
+              {t("referrals_connect_prompt")}
             </p>
             <Link
               href="/"
               className="text-xs text-primary hover:underline font-medium"
             >
-              Go to Chat →
+              {t("back_to_chat")}
             </Link>
           </div>
         ) : (
@@ -91,7 +93,7 @@ export default function ReferralsPage() {
             <div className="p-6 rounded-2xl border border-border bg-card/60 backdrop-blur-sm space-y-6">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
-                Referral Statistics
+                {t("referrals_stats_title")}
               </h2>
 
               {loading ? (
@@ -106,24 +108,24 @@ export default function ReferralsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 rounded-xl border border-border bg-background/40 transition-all hover:bg-background/60">
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      Friends Who Joined
+                      {t("referrals_friends_joined")}
                     </p>
                     <p className="text-2xl font-bold text-foreground mt-1">
                       {stats ? stats.count : 0}
                     </p>
                     <p className="text-[9px] text-muted-foreground mt-1">
-                      On-chain verified queries
+                      {t("referrals_verified_queries")}
                     </p>
                   </div>
                   <div className="p-4 rounded-xl border border-border bg-background/40 transition-all hover:bg-background/60">
                     <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                      Incentive Mode
+                      {t("referrals_incentive_mode")}
                     </p>
                     <p className="text-sm font-bold text-foreground mt-2">
-                      Purely Info
+                      {t("referrals_purely_info")}
                     </p>
                     <p className="text-[9px] text-muted-foreground mt-1">
-                      No farming / rewards
+                      {t("referrals_no_farming")}
                     </p>
                   </div>
                 </div>
@@ -133,7 +135,7 @@ export default function ReferralsPage() {
               {stats && stats.friends.length > 0 && (
                 <div className="space-y-2 mt-4 animate-fade-in">
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Referred Wallets
+                    {t("referrals_referred_wallets")}
                   </h3>
                   <div className="max-h-40 overflow-y-auto border border-border/60 rounded-xl divide-y divide-border bg-background/30">
                     {stats.friends.map((friend) => (
@@ -142,7 +144,7 @@ export default function ReferralsPage() {
                           {friend.slice(0, 10)}...{friend.slice(-8)}
                         </span>
                         <span className="text-[9px] px-1.5 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 rounded">
-                          First Query Complete
+                          {t("referrals_first_query_complete")}
                         </span>
                       </div>
                     ))}
@@ -154,12 +156,12 @@ export default function ReferralsPage() {
               <div className="flex items-start gap-2.5 text-xs text-blue-600 dark:text-blue-400 bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
                 <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-semibold">How referral tracking works</p>
+                  <p className="font-semibold">{t("referrals_info_title")}</p>
                   <p className="opacity-90 mt-0.5 leading-relaxed">
-                    When someone visits AskPay using your referral link, connects their wallet, and executes their first paid AI query, they are permanently recorded as your referee.
+                    {t("referrals_info_desc_1")}
                   </p>
                   <p className="opacity-90 mt-1.5 leading-relaxed">
-                    To comply with Proof of Ship guidelines against reward-farming mechanics, AskPay's referrals are <strong>purely informational</strong> — there are no token payouts or fee discounts. It exists solely to track organic sharing.
+                    {t("referrals_info_desc_2")}
                   </p>
                 </div>
               </div>
