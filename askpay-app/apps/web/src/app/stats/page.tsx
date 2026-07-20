@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { PAYPERQUERY_ADDRESS_MAINNET, ACTIVE_NETWORK } from "@/lib/contracts";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -117,6 +118,7 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useLanguage();
 
   const network = ACTIVE_NETWORK;
 
@@ -162,7 +164,7 @@ export default function StatsPage() {
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group"
           >
             <ArrowLeft className="h-3 w-3 group-hover:-translate-x-0.5 transition-transform" />
-            Back to Chat
+            {t("back_to_chat")}
           </Link>
         </div>
 
@@ -170,16 +172,10 @@ export default function StatsPage() {
           <div>
             <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-foreground">
               <BarChart3 className="h-7 w-7 text-primary" />
-              Live On-Chain Stats
+              {t("stats_title")}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-lg">
-              Real activity read directly from the{" "}
-              <span className="font-semibold text-foreground">
-                AskPay PayPerQuery
-              </span>{" "}
-              contract on{" "}
-              <span className="text-green-500 font-semibold">Celo Mainnet</span>
-              . No wallets required, no data is simulated.
+              {t("stats_subtitle")}
             </p>
           </div>
 
@@ -191,7 +187,7 @@ export default function StatsPage() {
             <RefreshCw
               className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`}
             />
-            Refresh
+            {t("stats_refresh")}
           </button>
         </div>
 
@@ -199,11 +195,11 @@ export default function StatsPage() {
         <div className="mt-4 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 border border-green-500/20 px-3 py-1 text-[11px] font-semibold text-green-600 dark:text-green-400">
             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            Celo Mainnet — Live
+            {t("stats_status_live")}
           </span>
           {stats?.fetchedAt && !loading && (
             <span className="text-[11px] text-muted-foreground">
-              Updated {timeAgo(stats.fetchedAt)} · cached 5 min
+              {t("stats_updated_prefix", { time: timeAgo(stats.fetchedAt) })} · {t("stats_cached_suffix")}
             </span>
           )}
         </div>
@@ -214,14 +210,14 @@ export default function StatsPage() {
         {error ? (
           <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center">
             <p className="text-sm font-semibold text-red-500">
-              Failed to load stats
+              {t("stats_failed_to_load")}
             </p>
             <p className="mt-1 text-xs text-red-400/80">{error}</p>
             <button
               onClick={() => fetchStats()}
               className="mt-4 text-xs text-red-500 underline underline-offset-2"
             >
-              Try again
+              {t("stats_try_again")}
             </button>
           </div>
         ) : loading ? (
@@ -234,22 +230,22 @@ export default function StatsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               icon={<MessageSquare className="h-5 w-5" />}
-              label="Total Questions"
+              label={t("stats_total_questions")}
               value={formatNumber(stats.totalQuestions)}
-              sub="QueryPaid events on-chain"
+              sub={t("stats_total_questions_sub")}
             />
             <StatCard
               icon={<DollarSign className="h-5 w-5" />}
-              label="Total Fees (USDm)"
+              label={t("stats_total_fees")}
               value={`$${formatFee(stats.totalFeesUsdm)}`}
-              sub="Sum of all QueryPaid amounts"
+              sub={t("stats_total_fees_sub")}
               accent="text-emerald-500"
             />
             <StatCard
               icon={<Users className="h-5 w-5" />}
-              label="Unique Payers"
+              label={t("stats_unique_payers")}
               value={formatNumber(stats.uniquePayers)}
-              sub="Distinct wallet addresses"
+              sub={t("stats_unique_payers_sub")}
               accent="text-violet-500"
             />
           </div>
@@ -263,22 +259,10 @@ export default function StatsPage() {
             <Zap className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             <div>
               <p className="text-xs font-semibold text-foreground">
-                How these numbers are calculated
+                {t("stats_calc_title")}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                All three metrics are derived by scanning every{" "}
-                <code className="text-[10px] bg-muted px-1 py-0.5 rounded font-mono">
-                  QueryPaid
-                </code>{" "}
-                event emitted by the{" "}
-                <code className="text-[10px] bg-muted px-1 py-0.5 rounded font-mono">
-                  PayPerQuery
-                </code>{" "}
-                contract using{" "}
-                <span className="font-semibold">viem&apos;s getLogs</span> from
-                the deployment block to latest. No backend database — purely
-                on-chain. Results are cached for up to 5 minutes via Next.js
-                ISR.
+                {t("stats_calc_desc")}
               </p>
             </div>
           </div>
@@ -289,7 +273,7 @@ export default function StatsPage() {
             className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border px-4 py-2 text-xs font-medium hover:border-primary/40 hover:text-primary transition-all"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            View on Celoscan
+            {t("stats_view_on_celoscan")}
           </a>
         </div>
       </section>
@@ -299,7 +283,7 @@ export default function StatsPage() {
         <section className="container mx-auto max-w-3xl px-4 mt-4">
           <div className="rounded-xl border border-border/60 bg-background/30 px-4 py-3 flex items-center gap-3 text-xs font-mono text-muted-foreground">
             <span className="text-[10px] uppercase tracking-wider font-sans font-semibold text-muted-foreground/70 shrink-0">
-              Contract
+              {t("stats_contract_label")}
             </span>
             <span className="truncate">{PAYPERQUERY_ADDRESS_MAINNET}</span>
             <a
