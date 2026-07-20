@@ -20,7 +20,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { checkRateLimit, recordRequest } from "@/lib/rate-limiter";
+import { checkRateLimit, recordRequest, rateLimiterConfig } from "@/lib/rate-limiter";
 
 // ---------------------------------------------------------------------------
 // Runtime declaration
@@ -89,10 +89,22 @@ export function middleware(req: NextRequest) {
     );
   }
 
-  // ── Allowed — pass through with rate-limit headers ─────────────────────────
-  const response = NextResponse.next();
-  response.headers.set("X-RateLimit-Limit", String(result.remaining !== undefined ? (result.remaining + (/* hits so far= */ 1)) : "?"));
-  response.headers.set("X-RateLimit-Remaining", String(result.remaining ?? 0));
+  // ── Allowed — pass through ───────────────────────────────────────────────
+  // Inject rl values as *request* headers so the route handler can copy them
+  // onto the SSE Response() it constructs (middleware cannot mutate a Response
+  // it does not own, but it can add request headers via NextResponse.next()).
+  const limit = rateLimiterConfig.maxRequests;
+  const remaining = result.remaining ?? 0;
+
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-rl-limit", String(limit));
+  requestHeaders.set("x-rl-remaining", String(remaining));
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  // Also set standard response headers so plain fetch() callers see them
+  response.headers.set("X-RateLimit-Limit", String(limit));
+  response.headers.set("X-RateLimit-Remaining", String(remaining));
 
   return response;
 }
