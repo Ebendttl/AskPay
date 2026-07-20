@@ -553,6 +553,9 @@ export async function POST(req: NextRequest) {
       Connection: "keep-alive",
       // Allow Next.js edge / node runtime to flush immediately
       "X-Accel-Buffering": "no",
+      // Forward rate-limit headers set by middleware so the client can read them
+      "X-RateLimit-Limit": req.headers.get("x-rl-limit") ?? "10",
+      "X-RateLimit-Remaining": req.headers.get("x-rl-remaining") ?? "0",
     },
   });
 }
