@@ -98,3 +98,7 @@ Thumbs.db
 
 # Turbo
 .turbo
+
+# Runtime server-side JSON databases (persist across deploys but must not be tracked)
+apps/web/src/lib/referrals-db.json
+apps/web/src/lib/feedback-db.json
