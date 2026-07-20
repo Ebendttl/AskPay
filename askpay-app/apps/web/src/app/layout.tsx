@@ -11,6 +11,7 @@ import { NotificationProvider } from '@/lib/notification-context';
 import { ToastContainer } from '@/components/toast';
 import { OnboardingWrapper } from '@/components/onboarding-wrapper';
 import { ReferralTracker } from '@/components/referral-tracker';
+import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -45,7 +46,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Hard favicon link — belt-and-suspenders over Next.js metadata injection */}
+        {/* PWA manifest + theme colour */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0D1B2A" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="AskPay" />
+        {/* Hard favicon link — belt-and-suspenders over Next.js metadata injection */}}
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -81,6 +89,7 @@ export default function RootLayout({
                   <ToastContainer />
                   <OnboardingWrapper />
                   <ReferralTracker />
+                  <ServiceWorkerRegistration />
                 </WalletProvider>
               </LanguageProvider>
             </NotificationProvider>
