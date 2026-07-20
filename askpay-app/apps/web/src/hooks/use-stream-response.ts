@@ -38,6 +38,12 @@ export interface UseStreamResponseReturn {
   streamingText: string;
   status: StreamStatus;
   errorMessage: string | null;
+  /** Remaining requests in the current rate-limit window (null until first response) */
+  rateLimitRemaining: number | null;
+  /** Max requests allowed per window */
+  rateLimitMax: number;
+  /** Seconds until the rate-limit window resets (set on 429, null otherwise) */
+  retryAfterSeconds: number | null;
   /**
    * Begin streaming the LLM response for a verified payment.
    * Resolves when the stream is fully consumed (done or error).
@@ -55,6 +61,9 @@ export function useStreamResponse(): UseStreamResponseReturn {
   const [streamingText, setStreamingText] = useState("");
   const [status, setStatus] = useState<StreamStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rateLimitRemaining, setRateLimitRemaining] = useState<number | null>(null);
+  const [rateLimitMax, setRateLimitMax] = useState<number>(10);
+  const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
 
   // Keep a ref to the active reader so we can cancel on unmount if needed
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
@@ -66,6 +75,7 @@ export function useStreamResponse(): UseStreamResponseReturn {
     setStreamingText("");
     setStatus("idle");
     setErrorMessage(null);
+    setRetryAfterSeconds(null);
   }, []);
 
   const startStream = useCallback(
@@ -98,8 +108,20 @@ export function useStreamResponse(): UseStreamResponseReturn {
           }),
         });
 
-        // Non-streaming error responses from the route (e.g. 400 validation, 500)
+        // Non-streaming error responses from the route (e.g. 400 validation, 429, 500)
         if (!res.ok) {
+          // --- 429 Rate-Limited ---
+          if (res.status === 429) {
+            // Read Retry-After header first (set by middleware)
+            const retryHeader = res.headers.get("Retry-After");
+            const retryAfter = retryHeader ? parseInt(retryHeader, 10) : 60;
+            setRetryAfterSeconds(isNaN(retryAfter) ? 60 : retryAfter);
+            setRateLimitRemaining(0);
+            setStatus("error");
+            setErrorMessage(`__rate_limited__:${retryAfter}`);
+            return;
+          }
+
           let errMsg = `Server error ${res.status}`;
           try {
             const errJson = await res.json();
@@ -110,6 +132,18 @@ export function useStreamResponse(): UseStreamResponseReturn {
           setStatus("error");
           setErrorMessage(errMsg);
           return;
+        }
+
+        // Read rate-limit headers from successful response
+        const rlRemaining = res.headers.get("X-RateLimit-Remaining");
+        const rlMax = res.headers.get("X-RateLimit-Limit");
+        if (rlRemaining !== null) {
+          const n = parseInt(rlRemaining, 10);
+          if (!isNaN(n)) setRateLimitRemaining(n);
+        }
+        if (rlMax !== null) {
+          const m = parseInt(rlMax, 10);
+          if (!isNaN(m)) setRateLimitMax(m);
         }
 
         if (!res.body) {
@@ -224,5 +258,5 @@ export function useStreamResponse(): UseStreamResponseReturn {
     [] // no external deps — ACTIVE_NETWORK is a module-level constant
   );
 
-  return { streamingText, status, errorMessage, startStream, reset };
+  return { streamingText, status, errorMessage, rateLimitRemaining, rateLimitMax, retryAfterSeconds, startStream, reset };
 }
