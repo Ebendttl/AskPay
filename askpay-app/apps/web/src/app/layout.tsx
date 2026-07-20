@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.css';
 
 import { Navbar } from '@/components/navbar';
@@ -12,6 +13,41 @@ import { ToastContainer } from '@/components/toast';
 import { OnboardingWrapper } from '@/components/onboarding-wrapper';
 import { ReferralTracker } from '@/components/referral-tracker';
 import { ServiceWorkerRegistration } from '@/components/service-worker-registration';
+
+function getLocaleFromHeaders(acceptLanguage: string | null): "en" | "sw" {
+  if (!acceptLanguage) return "en";
+
+  try {
+    const parsed = acceptLanguage
+      .split(",")
+      .map(part => {
+        const [lang, qVal] = part.split(";");
+        const code = lang.trim().toLowerCase();
+        let q = 1.0;
+        if (qVal) {
+          const match = qVal.match(/q=([0-9.]+)/);
+          if (match && match[1]) {
+            q = parseFloat(match[1]);
+          }
+        }
+        return { code, q };
+      })
+      .filter(item => item.code.startsWith("en") || item.code.startsWith("sw"));
+
+    if (parsed.length === 0) return "en";
+
+    // Sort by weight descending
+    parsed.sort((a, b) => b.q - a.q);
+
+    const bestMatch = parsed[0].code;
+    if (bestMatch.startsWith("sw")) {
+      return "sw";
+    }
+    return "en";
+  } catch (err) {
+    return "en";
+  }
+}
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -43,8 +79,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const headerList = headers();
+  const acceptLanguage = headerList.get('accept-language');
+  const defaultLocale = getLocaleFromHeaders(acceptLanguage);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={defaultLocale} suppressHydrationWarning>
       <head>
         {/* PWA manifest + theme colour */}
         <link rel="manifest" href="/manifest.json" />
@@ -79,7 +119,7 @@ export default function RootLayout({
         <div className="relative flex min-h-screen flex-col">
           <ThemeProvider>
             <NotificationProvider>
-              <LanguageProvider>
+              <LanguageProvider initialLocale={defaultLocale}>
                 <WalletProvider>
                   <Navbar />
                   <main className="flex-1">
