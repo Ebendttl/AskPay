@@ -26,24 +26,32 @@ export function PricingTable() {
           </tr>
           <tr>
             <td className="p-4 font-semibold text-foreground">Upfront Commitment</td>
-            <td className="p-4 text-foreground flex items-center gap-1.5">
-              <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span>None — pay only when you ask</span>
+            <td className="p-4 text-foreground">
+              <div className="flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>None — pay only when you ask</span>
+              </div>
             </td>
-            <td className="p-4 text-muted-foreground flex items-center gap-1.5">
-              <X className="h-4 w-4 text-red-500 shrink-0" />
-              <span>100% paid upfront regardless of usage</span>
+            <td className="p-4 text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <X className="h-4 w-4 text-red-500 shrink-0" />
+                <span>100% paid upfront regardless of usage</span>
+              </div>
             </td>
           </tr>
           <tr>
             <td className="p-4 font-semibold text-foreground">Account / KYC</td>
-            <td className="p-4 text-foreground flex items-center gap-1.5">
-              <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span>None — connect wallet & query</span>
+            <td className="p-4 text-foreground">
+              <div className="flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>None — connect wallet & query</span>
+              </div>
             </td>
-            <td className="p-4 text-muted-foreground flex items-center gap-1.5">
-              <X className="h-4 w-4 text-red-500 shrink-0" />
-              <span>Required email, password, profile setup</span>
+            <td className="p-4 text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <X className="h-4 w-4 text-red-500 shrink-0" />
+                <span>Required email, password, profile setup</span>
+              </div>
             </td>
           </tr>
           <tr>
@@ -53,13 +61,17 @@ export function PricingTable() {
           </tr>
           <tr>
             <td className="p-4 font-semibold text-foreground">Cancellation Hassle</td>
-            <td className="p-4 text-foreground flex items-center gap-1.5">
-              <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span>None — simply close the app</span>
+            <td className="p-4 text-foreground">
+              <div className="flex items-center gap-1.5">
+                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>None — simply close the app</span>
+              </div>
             </td>
-            <td className="p-4 text-muted-foreground flex items-center gap-1.5">
-              <X className="h-4 w-4 text-red-500 shrink-0" />
-              <span>Multi-step unsubscribe flows required</span>
+            <td className="p-4 text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <X className="h-4 w-4 text-red-500 shrink-0" />
+                <span>Multi-step unsubscribe flows required</span>
+              </div>
             </td>
           </tr>
         </tbody>
