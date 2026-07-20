@@ -28,6 +28,8 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
               onClick={() => setOpenIndex(isOpen ? null : index)}
               className="flex w-full items-center justify-between p-5 text-left font-semibold text-foreground transition-colors hover:text-primary"
               aria-expanded={isOpen}
+              aria-controls={`faq-content-${index}`}
+              id={`faq-btn-${index}`}
             >
               <span className="pr-4">{item.question}</span>
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted transition-colors group-hover:bg-primary/10">
@@ -39,6 +41,9 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
               </span>
             </button>
             <div
+              id={`faq-content-${index}`}
+              aria-labelledby={`faq-btn-${index}`}
+              role="region"
               className={`grid transition-all duration-200 ease-in-out ${
                 isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
               }`}
