@@ -7,6 +7,7 @@ import {
   PAYPERQUERY_ADDRESS,
   ACTIVE_CHAIN,
   DEPLOY_BLOCK,
+  getLogsInChunks,
 } from "@/lib/contracts";
 
 export interface QueryPaidEventLog {
@@ -49,13 +50,14 @@ export function useMyQuestions(): UseMyQuestionsReturn {
     setError(null);
 
     try {
-      const logs = await publicClient.getLogs({
+      const logs = await getLogsInChunks(publicClient, {
         address: PAYPERQUERY_ADDRESS,
         event: queryPaidEventAbiItem,
         args: {
           payer: address,
         },
         fromBlock: DEPLOY_BLOCK,
+        toBlock: "latest",
       });
 
       const formattedEvents: QueryPaidEventLog[] = logs
