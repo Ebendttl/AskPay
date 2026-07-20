@@ -13,8 +13,13 @@ interface LanguageContextProps {
 
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+interface LanguageProviderProps {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}
+
+export function LanguageProvider({ children, initialLocale = "en" }: LanguageProviderProps) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   // Load language preference from localStorage on mount
   useEffect(() => {
@@ -22,9 +27,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const savedLocale = localStorage.getItem("askpay_locale") as Locale;
       if (savedLocale === "en" || savedLocale === "sw") {
         setLocaleState(savedLocale);
+        document.documentElement.lang = savedLocale;
+      } else {
+        // Fallback to client-side navigator check if no saved locale
+        const browserLocale = (navigator.languages && navigator.languages[0]) || navigator.language || "";
+        if (browserLocale.toLowerCase().startsWith("sw")) {
+          setLocaleState("sw");
+          document.documentElement.lang = "sw";
+        } else {
+          setLocaleState(initialLocale);
+          document.documentElement.lang = initialLocale;
+        }
       }
     }
-  }, []);
+  }, [initialLocale]);
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);
