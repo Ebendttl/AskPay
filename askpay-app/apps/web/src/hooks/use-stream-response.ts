@@ -81,6 +81,8 @@ export function useStreamResponse(): UseStreamResponseReturn {
       let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
       try {
+        const referrer = typeof window !== "undefined" ? window.localStorage.getItem("askpay_referrer") : null;
+
         const res = await fetch("/api/ask", {
           method: "POST",
           headers: {
@@ -92,6 +94,7 @@ export function useStreamResponse(): UseStreamResponseReturn {
             queryId: params.queryId,
             txHash: params.txHash,
             network: params.network ?? ACTIVE_NETWORK,
+            referrer: referrer || undefined,
           }),
         });
 
