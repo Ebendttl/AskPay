@@ -752,10 +752,9 @@ export function ChatBox() {
                     <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
                       <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                       <div>
-                        <p className="font-semibold">Request limit reached for this window</p>
+                        <p className="font-semibold">{t("rate_limit_title")}</p>
                         <p className="mt-0.5 opacity-90">
-                          You've used all {rateLimitMax} requests allowed per minute. This is a temporary window — not a ban.
-                          Try again in approximately <span className="font-bold">{secs} second{secs === 1 ? "" : "s"}</span>.
+                          {t("rate_limit_desc", { max: rateLimitMax, secs })}
                         </p>
                       </div>
                     </div>
