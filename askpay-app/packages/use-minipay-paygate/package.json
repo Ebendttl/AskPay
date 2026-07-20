@@ -4,6 +4,10 @@
   "description": "On-chain stablecoin payment verification library for Celo and MiniPay applications.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -20,6 +24,13 @@
   ],
   "author": "Ebendttl",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ebendttl/AskPay"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "peerDependencies": {
     "viem": "^2.0.0"
   },
