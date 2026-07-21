@@ -1,20 +1,24 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { GET } from "../route";
 
-// Mock viem createPublicClient
+const mockGetBlockNumber = vi.fn();
+
 vi.mock("viem", async () => {
-  const actual = await vi.importActual("viem");
+  const actual = await vi.importActual<typeof import("viem")>("viem");
   return {
     ...actual,
-    createPublicClient: vi.fn().mockReturnValue({
-      getBlockNumber: vi.fn().mockResolvedValue(12345678n),
+    createPublicClient: () => ({
+      getBlockNumber: mockGetBlockNumber,
     }),
   };
 });
 
+// Import route AFTER vi.mock
+import { GET } from "../route";
+
 describe("GET /api/health", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
+    mockGetBlockNumber.mockResolvedValue(12345678n);
     delete process.env.LLM_API_KEY;
     process.env.LLM_API_PROVIDER = "gemini";
   });
