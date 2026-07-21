@@ -414,6 +414,15 @@ export const translations: TranslationDictionary = {
     chat_retry_scheduled_check_status: "Angalia Hali",
     chat_retry_scheduled_delivered: "Jibu Limewasilishwa!",
 
+    // AI & Legal Disclaimers
+    ai_disclaimer_inline: "Jibu la AI. Linaweza kuwa na makosa — si ushauri wa kifedha, matibabu, kisheria au kitaalamu.",
+    ai_disclaimer_legal_link: "Vigezo vya kisheria",
+    disclaimer_modal_title: "Kanusho la AI na Kisheria",
+    disclaimer_modal_subtitle: "Tafadhali kagua na ukubali kabla ya kuuliza swali lako la kwanza.",
+    disclaimer_modal_body: "AskPay inatoa majibu yanayotokana na AI kwa madhumuni ya taarifa tu. Majibu yanaweza kuwa yasiyo sahihi au ya zamani na hayafanyi ushauri wa kifedha, matibabu, kisheria au kitaalamu.",
+    disclaimer_modal_link_text: "Soma Vigezo na Sera kamili za Kisheria",
+    disclaimer_modal_agree: "Nimeelewa na Ninakubali",
+
     // Payment Confirmation Card
     confirm_card_title: "Malipo Yamethibitishwa",
     confirm_card_tx_hash: "Hash ya Tx",
