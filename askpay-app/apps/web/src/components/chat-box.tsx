@@ -1037,6 +1037,12 @@ export function ChatBox() {
         </div>
       )}
 
+      {/* First-use AI Legal Disclaimer Modal */}
+      <DisclaimerModal
+        isOpen={showDisclaimerModal}
+        onAccept={handleDisclaimerAccept}
+        onClose={() => setShowDisclaimerModal(false)}
+      />
     </div>
   );
 }
