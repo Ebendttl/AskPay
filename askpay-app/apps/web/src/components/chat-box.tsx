@@ -18,13 +18,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
 import { useStreamResponse, type StreamParams } from "@/hooks/use-stream-response";
-import { Loader2, Send, CheckCircle2, AlertCircle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
+import { Loader2, Send, CheckCircle2, AlertCircle, AlertTriangle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { HeroSection } from "@/components/hero-section";
@@ -34,6 +35,7 @@ import { PaymentConfirmationCard } from "@/components/payment-confirmation-card"
 import { RetryScheduledCard } from "@/components/retry-scheduled-card";
 import { RateLimitIndicator } from "@/components/rate-limit-indicator";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { DisclaimerModal, DISCLAIMER_LS_KEY } from "@/components/disclaimer-modal";
 
 // ---------------------------------------------------------------------------
 // Helpers
