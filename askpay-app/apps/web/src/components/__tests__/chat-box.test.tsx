@@ -32,6 +32,8 @@ vi.mock("@/hooks/use-stream-response", () => ({
 describe("ChatBox Component", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
+    localStorage.setItem("askpay_disclaimer_ack", "true");
 
     // Default mock returns
     mockUseMiniPay.mockReturnValue({ isMiniPay: false, detected: true });
