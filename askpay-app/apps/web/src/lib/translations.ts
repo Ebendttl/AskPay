@@ -105,6 +105,15 @@ export const translations: TranslationDictionary = {
     chat_retry_scheduled_check_status: "Check Status",
     chat_retry_scheduled_delivered: "Answer Delivered!",
 
+    // AI & Legal Disclaimers
+    ai_disclaimer_inline: "AI-generated response. May contain inaccuracies — not financial, medical, legal, or professional advice.",
+    ai_disclaimer_legal_link: "Legal terms",
+    disclaimer_modal_title: "AI & Legal Disclaimer",
+    disclaimer_modal_subtitle: "Please review and acknowledge before submitting your first paid question.",
+    disclaimer_modal_body: "AskPay provides AI-generated responses for informational purposes only. Responses may be inaccurate or out of date and do not constitute financial, medical, legal, or professional advice.",
+    disclaimer_modal_link_text: "Read full Terms & Legal Notices",
+    disclaimer_modal_agree: "I Understand & Agree",
+
     // Payment Confirmation Card
     confirm_card_title: "Payment Confirmed",
     confirm_card_tx_hash: "Tx Hash",
