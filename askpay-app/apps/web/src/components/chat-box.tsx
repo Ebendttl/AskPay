@@ -682,7 +682,7 @@ export function ChatBox() {
             return (
               <div
                 key={msg.id}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
               >
                 <div
                   className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
@@ -703,6 +703,18 @@ export function ChatBox() {
                     msg.content
                   )}
                 </div>
+
+                {msg.role === "assistant" && !isLive && (
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground/75 px-1 max-w-[80%]">
+                    <AlertTriangle className="h-3 w-3 shrink-0 text-amber-500/80" />
+                    <span>
+                      {t("ai_disclaimer_inline")}{" "}
+                      <Link href="/legal" target="_blank" className="underline hover:text-foreground">
+                        {t("ai_disclaimer_legal_link")}
+                      </Link>
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
