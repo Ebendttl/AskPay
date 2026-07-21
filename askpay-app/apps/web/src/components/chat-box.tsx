@@ -296,17 +296,40 @@ export function ChatBox() {
       })
     : "0.00";
 
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+
   // ---- Handle submit -------------------------------------------------------
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     if (!question.trim() || isBusy) return;
 
+    // Check first-use disclaimer acknowledgment
+    try {
+      const acked = localStorage.getItem(DISCLAIMER_LS_KEY) === "true";
+      if (!acked) {
+        setShowDisclaimerModal(true);
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to check disclaimer ack", e);
+    }
+
+    executeQuestionSubmission(question.trim());
+  }
+
+  const handleDisclaimerAccept = () => {
+    setShowDisclaimerModal(false);
+    if (question.trim()) {
+      executeQuestionSubmission(question.trim());
+    }
+  };
+
+  async function executeQuestionSubmission(savedQuestion: string) {
     // Clear history selection to show the new active chat
     if (selectedQueryId) {
       setSelectedQueryId(null);
     }
 
-    const savedQuestion = question.trim();
     setQuestion("");
 
     const queryId = generateQueryId();
