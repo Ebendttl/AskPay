@@ -14,11 +14,66 @@ import {
   ExternalLink,
   ArrowLeft,
   Wallet,
+  Download,
+  FileJson,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useAskPay } from "@/hooks/useAskPay";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { UsageChart, type DayBucket } from "@/components/usage-chart";
 import type { HistoryItem } from "@/components/chat-box";
+
+// ---------------------------------------------------------------------------
+// Export Helpers (Pure client-side blob download)
+// ---------------------------------------------------------------------------
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportHistoryAsJSON(history: HistoryItem[]) {
+  const dataToExport = history.map((item) => ({
+    queryId: item.queryId,
+    timestamp: item.timestamp,
+    dateISO: new Date(item.timestamp).toISOString(),
+    status: item.status,
+    question: item.question,
+    answer: item.answer ?? null,
+    txHash: item.txHash ?? null,
+  }));
+  const jsonString = JSON.stringify(dataToExport, null, 2);
+  downloadFile(jsonString, `askpay-history-${Date.now()}.json`, "application/json");
+}
+
+function exportHistoryAsCSV(history: HistoryItem[]) {
+  const headers = ["Query ID", "Timestamp", "Date (UTC)", "Status", "Question", "Answer", "Tx Hash"];
+  const escapeCsv = (val: string | number | undefined | null) => {
+    if (val === undefined || val === null) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const rows = history.map((item) => [
+    escapeCsv(item.queryId),
+    escapeCsv(item.timestamp),
+    escapeCsv(new Date(item.timestamp).toISOString()),
+    escapeCsv(item.status),
+    escapeCsv(item.question),
+    escapeCsv(item.answer),
+    escapeCsv(item.txHash),
+  ]);
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  downloadFile(csvContent, `askpay-history-${Date.now()}.csv`, "text/csv;charset=utf-8;");
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -199,15 +254,41 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Wallet badge */}
+          {/* Wallet badge & Export controls */}
           {isConnected && address && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card/60 text-xs">
-              <Wallet className="h-3.5 w-3.5 text-primary" />
-              <span className="font-mono text-muted-foreground">
-                {address.slice(0, 6)}…{address.slice(-4)}
-              </span>
-              <span className="text-muted-foreground">·</span>
-              <span className="font-medium text-foreground">{balanceDisplay} USDm</span>
+            <div className="flex flex-wrap items-center gap-3">
+              {history.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-card/60 border border-border p-1 rounded-xl text-xs">
+                  <span className="text-[11px] text-muted-foreground font-medium px-2 flex items-center gap-1">
+                    <Download className="h-3 w-3 text-primary" /> Export:
+                  </span>
+                  <button
+                    onClick={() => exportHistoryAsJSON(history)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-background hover:bg-muted/80 text-foreground font-medium transition-colors border border-border/40 text-xs shadow-xs"
+                    title="Export history as JSON"
+                  >
+                    <FileJson className="h-3.5 w-3.5 text-primary" />
+                    <span>JSON</span>
+                  </button>
+                  <button
+                    onClick={() => exportHistoryAsCSV(history)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-background hover:bg-muted/80 text-foreground font-medium transition-colors border border-border/40 text-xs shadow-xs"
+                    title="Export history as CSV"
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>CSV</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card/60 text-xs">
+                <Wallet className="h-3.5 w-3.5 text-primary" />
+                <span className="font-mono text-muted-foreground">
+                  {address.slice(0, 6)}…{address.slice(-4)}
+                </span>
+                <span className="text-muted-foreground">·</span>
+                <span className="font-medium text-foreground">{balanceDisplay} USDm</span>
+              </div>
             </div>
           )}
         </div>
@@ -287,11 +368,33 @@ export default function DashboardPage() {
                   <Zap className="h-4 w-4 text-primary" />
                   Recent Queries
                 </h2>
-                {history.length > 5 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    Showing 5 of {history.length}
-                  </span>
-                )}
+                <div className="flex items-center gap-3">
+                  {history.length > 5 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Showing 5 of {history.length}
+                    </span>
+                  )}
+                  {history.length > 0 && (
+                    <div className="flex items-center gap-1 border-l border-border/50 pl-3">
+                      <button
+                        onClick={() => exportHistoryAsJSON(history)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                        title="Download JSON history"
+                      >
+                        <FileJson className="h-3 w-3 text-primary" />
+                        JSON
+                      </button>
+                      <button
+                        onClick={() => exportHistoryAsCSV(history)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+                        title="Download CSV history"
+                      >
+                        <FileSpreadsheet className="h-3 w-3 text-emerald-500" />
+                        CSV
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {recentQueries.length === 0 ? (
