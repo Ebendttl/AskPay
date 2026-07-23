@@ -74,7 +74,7 @@ export function findSimilarHistoryItem(
     const union = new Set([...currentTokens, ...histTokens]).size;
     const similarity = union > 0 ? intersection / union : 0;
 
-    if (similarity >= 0.7) {
+    if (similarity >= 0.55) {
       return item;
     }
   }
