@@ -52,6 +52,7 @@ function getLocaleFromHeaders(acceptLanguage: string | null): "en" | "sw" {
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://askpay.app"),
   title: {
     default: "AskPay — Pay-Per-Query AI on Celo",
     template: "%s | AskPay",
@@ -71,6 +72,28 @@ export const metadata: Metadata = {
     ],
     apple: { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     shortcut: "/favicon.png",
+  },
+  openGraph: {
+    title: "AskPay — Pay-Per-Query AI on Celo",
+    description: "Decentralized AI chat powered by Celo. Pay one micro-transaction per question — no subscriptions, no sign-ups.",
+    url: "https://askpay.app",
+    siteName: "AskPay",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/favicon.png",
+        width: 512,
+        height: 512,
+        alt: "AskPay Brand Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AskPay — Pay-Per-Query AI on Celo",
+    description: "Decentralized AI chat powered by Celo. Pay one micro-transaction per question.",
+    images: ["/favicon.png"],
   },
 };
 
