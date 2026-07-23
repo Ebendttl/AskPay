@@ -428,6 +428,11 @@ export const translations: TranslationDictionary = {
     disclaimer_modal_link_text: "Soma Vigezo na Sera kamili za Kisheria",
     disclaimer_modal_agree: "Nimeelewa na Ninakubali",
 
+    // Similar Question Warning
+    chat_similar_warning: "Uliuliza kitu kinachofanana dakika {minutes} zilizopita — tazama jibu hilo badala yake?",
+    chat_similar_warning_recent: "Uliuliza kitu kinachofanana sasa hivi — tazama jibu hilo badala yake?",
+    chat_view_prior_answer: "Tazama Jibu",
+
     // Payment Confirmation Card
     confirm_card_title: "Malipo Yamethibitishwa",
     confirm_card_tx_hash: "Hash ya Tx",
