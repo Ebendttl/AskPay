@@ -17,7 +17,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
@@ -25,7 +25,7 @@ import { ConnectButton as RainbowConnectButton } from "@rainbow-me/rainbowkit";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useAskPay, generateQueryId } from "@/hooks/useAskPay";
 import { useStreamResponse, type StreamParams } from "@/hooks/use-stream-response";
-import { Loader2, Send, CheckCircle2, AlertCircle, AlertTriangle, Zap, History, ExternalLink, Plus, Trash2, Clock } from "lucide-react";
+import { Loader2, Send, CheckCircle2, AlertCircle, AlertTriangle, Zap, History, ExternalLink, Plus, Trash2, Clock, X } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { ACTIVE_NETWORK } from "@/lib/contracts";
 import { HeroSection } from "@/components/hero-section";
@@ -40,6 +40,47 @@ import { DisclaimerModal, DISCLAIMER_LS_KEY } from "@/components/disclaimer-moda
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function normalizeText(text: string): string {
+  return text.toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Check if the typed question is identical or near-identical (Jaccard similarity >= 0.7)
+ * to a question already in the user's local history.
+ */
+export function findSimilarHistoryItem(
+  currentQuestion: string,
+  history: HistoryItem[]
+): HistoryItem | null {
+  const normCurrent = normalizeText(currentQuestion);
+  if (normCurrent.length < 4) return null;
+
+  const currentTokens = new Set(normCurrent.split(" ").filter((t) => t.length > 1));
+  if (currentTokens.size === 0) return null;
+
+  for (const item of history) {
+    if (!item.question) continue;
+    const normHist = normalizeText(item.question);
+    if (normHist === normCurrent) return item;
+
+    const histTokens = new Set(normHist.split(" ").filter((t) => t.length > 1));
+    if (histTokens.size === 0) continue;
+
+    let intersection = 0;
+    for (const t of currentTokens) {
+      if (histTokens.has(t)) intersection++;
+    }
+    const union = new Set([...currentTokens, ...histTokens]).size;
+    const similarity = union > 0 ? intersection / union : 0;
+
+    if (similarity >= 0.7) {
+      return item;
+    }
+  }
+
+  return null;
+}
 
 /** Format a raw 18-decimal fee bigint to a human-readable string like "0.01" */
 function formatFee(raw: bigint): string {
