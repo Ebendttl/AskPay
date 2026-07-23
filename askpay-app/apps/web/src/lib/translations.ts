@@ -114,6 +114,11 @@ export const translations: TranslationDictionary = {
     disclaimer_modal_link_text: "Read full Terms & Legal Notices",
     disclaimer_modal_agree: "I Understand & Agree",
 
+    // Similar Question Warning
+    chat_similar_warning: "You asked something similar {minutes} minutes ago — view that answer instead?",
+    chat_similar_warning_recent: "You asked something similar just now — view that answer instead?",
+    chat_view_prior_answer: "View Answer",
+
     // Payment Confirmation Card
     confirm_card_title: "Payment Confirmed",
     confirm_card_tx_hash: "Tx Hash",
