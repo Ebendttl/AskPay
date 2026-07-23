@@ -244,16 +244,37 @@ async function pipeSseLinesFromResponse(
   }
 }
 
+/**
+ * Structured JSON lines logger helper.
+ * Outputs single-line JSON objects to stdout for log aggregators and observability.
+ */
+function logStructuredEvent(eventData: Record<string, unknown>): void {
+  console.log(
+    JSON.stringify({
+      tag: "AskPayLog",
+      timestamp: new Date().toISOString(),
+      ...eventData,
+    })
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Route Handler
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+
   // ── Parse & validate ──────────────────────────────────────────────────────
   let body: AskRequest;
   try {
     body = await req.json();
   } catch {
+    logStructuredEvent({
+      event: "ask_request_failed",
+      error: "Invalid JSON body",
+      durationMs: Date.now() - startTime,
+    });
     return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -263,23 +284,46 @@ export async function POST(req: NextRequest) {
   const { question, queryId, txHash, network = "sepolia" } = body;
 
   if (!question || !question.trim()) {
+    logStructuredEvent({
+      event: "ask_request_failed",
+      error: "Missing or empty question",
+      durationMs: Date.now() - startTime,
+    });
     return new Response(JSON.stringify({ error: "Missing or empty question" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
   if (!queryId) {
+    logStructuredEvent({
+      event: "ask_request_failed",
+      error: "Missing queryId",
+      durationMs: Date.now() - startTime,
+    });
     return new Response(JSON.stringify({ error: "Missing queryId" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
   if (!txHash || !txHash.startsWith("0x") || txHash.length !== 66) {
+    logStructuredEvent({
+      event: "ask_request_failed",
+      queryId,
+      error: "Invalid transaction hash format",
+      durationMs: Date.now() - startTime,
+    });
     return new Response(
       JSON.stringify({ error: "Invalid transaction hash format" }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
   }
+
+  logStructuredEvent({
+    event: "ask_request_received",
+    queryId,
+    txHash,
+    network,
+  });
 
   // ── Chain / contract config ───────────────────────────────────────────────
   const isMainnet = network === "mainnet";
