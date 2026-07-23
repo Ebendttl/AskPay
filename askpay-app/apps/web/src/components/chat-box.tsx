@@ -338,6 +338,14 @@ export function ChatBox() {
     : "0.00";
 
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [dismissedSimilarQueryId, setDismissedSimilarQueryId] = useState<string | null>(null);
+
+  const similarHistoryItem = useMemo(() => {
+    if (!question.trim() || selectedQueryId) return null;
+    const match = findSimilarHistoryItem(question, history);
+    if (match && match.queryId === dismissedSimilarQueryId) return null;
+    return match;
+  }, [question, history, selectedQueryId, dismissedSimilarQueryId]);
 
   // ---- Handle submit -------------------------------------------------------
   async function handleSubmit(e?: React.FormEvent) {
