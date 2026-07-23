@@ -373,6 +373,9 @@ export async function POST(req: NextRequest) {
 
   const { verifyPayment } = await import("use-minipay-paygate");
   let paymentResult;
+  const verificationStart = Date.now();
+  let verificationLatencyMs = 0;
+
   try {
     paymentResult = await verifyPayment({
       publicClient,
@@ -386,8 +389,40 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+    verificationLatencyMs = Date.now() - verificationStart;
+    logStructuredEvent({
+      event: "payment_verification",
+      queryId,
+      txHash,
+      network,
+      payer: paymentResult.payer,
+      status: "pass",
+      latencyMs: verificationLatencyMs,
+    });
   } catch (err: any) {
+    verificationLatencyMs = Date.now() - verificationStart;
     console.error("[AskPay API] Payment verification failed:", err.message);
+    logStructuredEvent({
+      event: "payment_verification",
+      queryId,
+      txHash,
+      network,
+      status: "fail",
+      latencyMs: verificationLatencyMs,
+      error: err.message || "Payment verification failed",
+    });
+    logStructuredEvent({
+      event: "ask_request_completed",
+      queryId,
+      txHash,
+      network,
+      durationMs: Date.now() - startTime,
+      verification: {
+        status: "fail",
+        latencyMs: verificationLatencyMs,
+        error: err.message || "Payment verification failed",
+      },
+    });
     updateRequestStatus(logId, "error");
     return new Response(
       JSON.stringify({ error: err.message || "Payment verification failed" }),
@@ -510,6 +545,8 @@ export async function POST(req: NextRequest) {
 
   // Run the LLM call in the background (don't await — return the stream immediately)
   (async () => {
+    const llmStart = Date.now();
+    const providerUsed = process.env.LLM_API_PROVIDER?.toLowerCase() || (process.env.LLM_API_KEY ? "unknown" : "demo");
     let lastError: Error | null = null;
     // Accumulate streamed tokens so we can persist the full answer on success
     let accumulatedAnswer = "";
@@ -552,6 +589,39 @@ export async function POST(req: NextRequest) {
         await writer.close();
         updateRequestStatus(logId, "done");
         updateQuery(queryId, { status: "answered", answer: accumulatedAnswer });
+
+        const llmLatencyMs = Date.now() - llmStart;
+        const totalDurationMs = Date.now() - startTime;
+        logStructuredEvent({
+          event: "llm_completion",
+          queryId,
+          txHash,
+          network,
+          payer: paymentResult.payer,
+          provider: providerUsed,
+          status: "success",
+          latencyMs: llmLatencyMs,
+          attempts: attempt,
+        });
+        logStructuredEvent({
+          event: "ask_request_completed",
+          queryId,
+          payer: paymentResult.payer,
+          txHash,
+          network,
+          durationMs: totalDurationMs,
+          verification: {
+            status: "pass",
+            latencyMs: verificationLatencyMs,
+          },
+          llm: {
+            status: "success",
+            provider: providerUsed,
+            latencyMs: llmLatencyMs,
+            error: null,
+          },
+        });
+
         console.log(
           `[AskPay API] SSE stream completed on attempt ${attempt} for queryId ${queryId}`
         );
@@ -565,6 +635,38 @@ export async function POST(req: NextRequest) {
     // ── All in-request attempts exhausted ─────────────────────────────────
     updateRequestStatus(logId, "error");
     updateQuery(queryId, { status: "retrying" });
+
+    const llmLatencyMs = Date.now() - llmStart;
+    const totalDurationMs = Date.now() - startTime;
+    logStructuredEvent({
+      event: "llm_completion",
+      queryId,
+      txHash,
+      network,
+      payer: paymentResult.payer,
+      provider: providerUsed,
+      status: "failure",
+      latencyMs: llmLatencyMs,
+      error: lastError?.message || "LLM streaming failed",
+    });
+    logStructuredEvent({
+      event: "ask_request_completed",
+      queryId,
+      payer: paymentResult.payer,
+      txHash,
+      network,
+      durationMs: totalDurationMs,
+      verification: {
+        status: "pass",
+        latencyMs: verificationLatencyMs,
+      },
+      llm: {
+        status: "failure",
+        provider: providerUsed,
+        latencyMs: llmLatencyMs,
+        error: lastError?.message || "LLM streaming failed",
+      },
+    });
 
     console.error(
       `[AskPay API] All ${MAX_REQUEST_ATTEMPTS} in-request attempts failed for ` +
